@@ -58,7 +58,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         image: 'assets/images/onboard2.jpg',
                         title: "Discover New Products",
                         description:
-                            "Explore trending items, local stores, and global sellers — all in one app.",
+                            "Explore trending items, local stores, and global sellers, all in one app.",
                       ),
                       buildPage(
                         image: 'assets/images/onboard3.jpg',
@@ -126,7 +126,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 60), // extra breathing space at bottom
+                const SizedBox(height: 60),
               ],
             ),
           ),
