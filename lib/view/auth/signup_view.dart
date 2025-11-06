@@ -2,6 +2,7 @@
 
 import 'dart:ui';
 import 'package:connectify/view/auth/login_view.dart';
+import 'package:connectify/widgets/bottom_navigation_bar.dart';
 import 'package:flutter/material.dart';
 
 class SignupView extends StatefulWidget {
@@ -128,7 +129,14 @@ class _SignupViewState extends State<SignupView> {
                             vertical: 15,
                           ),
                         ),
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BottomNavigation(),
+                            ),
+                          );
+                        },
                         child: const Text(
                           "Sign Up",
                           style: TextStyle(

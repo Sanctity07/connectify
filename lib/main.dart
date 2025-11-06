@@ -1,4 +1,4 @@
-import 'package:connectify/view/splash_screen.dart';
+import 'package:connectify/view/screens/splash_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {

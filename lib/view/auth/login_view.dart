@@ -2,6 +2,7 @@
 
 import 'dart:ui';
 import 'package:connectify/view/auth/forgot_password_view.dart';
+import 'package:connectify/widgets/bottom_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:connectify/view/auth/signup_view.dart';
 
@@ -131,7 +132,14 @@ class _LoginViewState extends State<LoginView> {
                             vertical: 15,
                           ),
                         ),
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => BottomNavigation(),
+                            ),
+                          );
+                        },
                         child: const Text(
                           "Login",
                           style: TextStyle(

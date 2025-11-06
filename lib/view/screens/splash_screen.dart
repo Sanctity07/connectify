@@ -1,7 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'dart:async';
-import 'package:connectify/view/onboarding_screen.dart';
+import 'package:connectify/view/screens/onboarding_screen.dart';
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatefulWidget {
