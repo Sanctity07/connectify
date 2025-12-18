@@ -1,8 +1,8 @@
 // ignore_for_file: deprecated_member_use
 
 import 'dart:ui';
+import 'package:connectify/services/auth_services.dart';
 import 'package:connectify/view/auth/login_view.dart';
-import 'package:connectify/widgets/bottom_navigation_bar.dart';
 import 'package:flutter/material.dart';
 
 class SignupView extends StatefulWidget {
@@ -129,12 +129,12 @@ class _SignupViewState extends State<SignupView> {
                             vertical: 15,
                           ),
                         ),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => BottomNavigation(),
-                            ),
+                        onPressed: () async {
+                          await AuthServices().signup(
+                            username: nameController.text,
+                            email: emailController.text,
+                            password: passwordController.text,
+                            context: context,
                           );
                         },
                         child: const Text(

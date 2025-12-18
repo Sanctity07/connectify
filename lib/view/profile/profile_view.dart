@@ -1,3 +1,4 @@
+import 'package:connectify/services/auth_services.dart';
 import 'package:flutter/material.dart';
 
 class ProfileView extends StatelessWidget {
@@ -6,8 +7,16 @@ class ProfileView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Text("Profile page"),
+      body: Column(
+        children: [
+          Text("Profile View"),
+          ElevatedButton(
+            onPressed: () async {
+            await AuthServices().logout(context);
+          }, child: 
+          Text("Logout"),
+          ),
+        ],
       ),
     );
   }

@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'dart:ui';
+import 'package:connectify/services/auth_services.dart';
 import 'package:flutter/material.dart';
 
 class ForgotPasswordView extends StatefulWidget {
@@ -94,7 +95,12 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                             vertical: 15,
                           ),
                         ),
-                        onPressed: () {},
+                        onPressed: () async {
+                          await AuthServices().resetPassword(
+                            email: emailController.text,
+                            context: context,
+                          );
+                        },
                         child: const Text(
                           "Reset",
                           style: TextStyle(

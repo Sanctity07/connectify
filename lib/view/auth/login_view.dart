@@ -1,8 +1,8 @@
 // ignore_for_file: deprecated_member_use
 
 import 'dart:ui';
+import 'package:connectify/services/auth_services.dart';
 import 'package:connectify/view/auth/forgot_password_view.dart';
-import 'package:connectify/widgets/bottom_navigation_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:connectify/view/auth/signup_view.dart';
 
@@ -132,12 +132,11 @@ class _LoginViewState extends State<LoginView> {
                             vertical: 15,
                           ),
                         ),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => BottomNavigation(),
-                            ),
+                        onPressed: () async{
+                          await AuthServices().login(
+                            email: emailController.text,
+                            password: passwordController.text,
+                            context: context,
                           );
                         },
                         child: const Text(

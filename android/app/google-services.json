@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "204261758734",
+    "project_id": "connectify-lucky",
+    "storage_bucket": "connectify-lucky.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:204261758734:android:bd42c639378e6ec0d8e95f",
+        "android_client_info": {
+          "package_name": "com.example.connectify"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAFTJj4R8HMzu6dJdQDqMoF3mRccf3o_Ak"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

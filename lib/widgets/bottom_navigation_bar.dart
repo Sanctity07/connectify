@@ -1,8 +1,10 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
-import 'package:stylish_bottom_bar/stylish_bottom_bar.dart';
-import '../view/feed/feed_view.dart';
-import '../view/feed/add_post_view.dart';
-import '../view/marketplace/marketplace_view.dart';
+
+import '../view/home/home_view.dart';
+import '../view/categories/categories_view.dart';
+import '../view/home/bookings_view.dart';
 import '../view/chat/chat_list_view.dart';
 import '../view/profile/profile_view.dart';
 
@@ -19,11 +21,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
 
   void _onItemTapped(int index) {
     setState(() => _selectedIndex = index);
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeInOut,
-    );
+    _pageController.jumpToPage(index);
   }
 
   @override
@@ -35,68 +33,68 @@ class _BottomNavigationState extends State<BottomNavigation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.grey.shade100,
+
       body: PageView(
         controller: _pageController,
         physics: const NeverScrollableScrollPhysics(),
-        onPageChanged: (index) => setState(() => _selectedIndex = index),
-        children: const [
-          FeedView(),
-          MarketplaceView(),
-          AddPostView(),
+        children: [
+          HomeView(),
+          CategoriesView(),
+          BookingsView(),
           ChatListView(),
           ProfileView(),
         ],
       ),
 
-      bottomNavigationBar: StylishBottomBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        backgroundColor: const Color.fromARGB(255, 51, 33, 243),
-        elevation: 8,
-        option: BubbleBarOptions(
-          barStyle: BubbleBarStyle.horizontal,
-          opacity: 0.2,
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          borderRadius: BorderRadius.circular(10),
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-        items: [
-          BottomBarItem(
-            icon: const Icon(Icons.home_outlined),
-            selectedIcon: const Icon(Icons.home),
-            title: const Text('Feed', style: TextStyle(fontSize: 13)),
-            selectedColor: Colors.white,
-            unSelectedColor: Colors.white70,
-          ),
-          BottomBarItem(
-            icon: const Icon(Icons.store_outlined),
-            selectedIcon: const Icon(Icons.store),
-            title: const Text('Market', style: TextStyle(fontSize: 13)),
-            selectedColor: Colors.white,
-            unSelectedColor: Colors.white70,
-          ),
-          BottomBarItem(
-            icon: const Icon(Icons.add_circle_outline),
-            selectedIcon: const Icon(Icons.add_circle),
-            title: const Text('Post', style: TextStyle(fontSize: 13)),
-            selectedColor: Colors.white,
-            unSelectedColor: Colors.white70,
-          ),
-          BottomBarItem(
-            icon: const Icon(Icons.chat_bubble_outline),
-            selectedIcon: const Icon(Icons.chat),
-            title: const Text('Chat', style: TextStyle(fontSize: 13)),
-            selectedColor: Colors.white,
-            unSelectedColor: Colors.white70,
-          ),
-          BottomBarItem(
-            icon: const Icon(Icons.person_outline),
-            selectedIcon: const Icon(Icons.person),
-            title: const Text('Profile', style: TextStyle(fontSize: 13)),
-            selectedColor: Colors.white,
-            unSelectedColor: Colors.white70,
-          ),
-        ],
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: List.generate(5, (index) {
+            final icons = [
+              Icons.home_rounded,
+              Icons.category_rounded,
+              Icons.book_online_rounded,
+              Icons.chat_rounded,
+              Icons.person_rounded,
+            ];
+
+            final isActive = _selectedIndex == index;
+
+            return GestureDetector(
+              onTap: () => _onItemTapped(index),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isActive
+                      ? Colors.deepPurple.withOpacity(0.15)
+                      : Colors.transparent,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icons[index],
+                  size: 26,
+                  color:
+                      isActive ? Colors.deepPurple : Colors.grey,
+                ),
+              ),
+            );
+          }),
+        ),
       ),
     );
   }

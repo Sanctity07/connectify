@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-class FeedView extends StatelessWidget {
-  const FeedView({super.key});
+class CategoriesView extends StatelessWidget {
+  const CategoriesView({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Text("Feed page"),
+        child: Text("Categories page"),
       ),
     );
   }
