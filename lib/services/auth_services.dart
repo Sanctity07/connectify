@@ -1,183 +1,174 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:connectify/view/auth/login_view.dart';
-import 'package:connectify/widgets/bottom_navigation_bar.dart';
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+
+import '../models/user_model.dart';
+
 class AuthServices {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<void> signup({
+  Future<UserModel?> signup({
     required String username,
     required String email,
     required String password,
-    required BuildContext context,
-  })async{
-    try{
-      UserCredential userCredential = await FirebaseAuth.instance
-      .createUserWithEmailAndPassword(email: email, password: password);
-
-      User? user =userCredential.user;
-
-      await user?.updateDisplayName(username);
-
-      user = FirebaseAuth.instance.currentUser;
-
-      if(user != null){
-        await _firestore.collection("users").doc(user.uid).set({
-          "username": username,
-          "email": email,
-          "createdAt": FieldValue.serverTimestamp(),
-        });
-      }
-
-      Fluttertoast.showToast(
-        msg: "Signup successful! Welcome $username",
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.green,
-        textColor: Colors.white,
-        fontSize: 14.0,
+  }) async {
+    try {
+      final UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: email.trim(),
+        password: password.trim(),
       );
 
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=> BottomNavigation()));
-    }on FirebaseAuthException catch (e) {
-      String message = "";
-      if (e.code == "weak-password") {
-        message = "The password is too weak";
-      } else if (e.code == "email-already-in-use") {
-        message = "An account already exists with that email";
-      } else {
-        message = e.message ?? "Signup failed.";
+      final User? user = userCredential.user;
+      if (user == null) return null;
+
+      await user.updateDisplayName(username);
+
+      if (!user.emailVerified) {
+        await user.sendEmailVerification();
       }
 
-      Fluttertoast.showToast(
-        msg: message,
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.black87,
-        textColor: Colors.white,
-        fontSize: 14.0,
+      final UserModel newUser = UserModel(
+        id: user.uid,
+        username: username,
+        email: email,
+        role: "customer",
+        createdAt: DateTime.now(),
       );
-    } catch (e) {
+
+      await _firestore
+          .collection("users")
+          .doc(user.uid)
+          .set(newUser.toMap());
+
+      return newUser;
+    } on FirebaseAuthException catch (e) {
       Fluttertoast.showToast(
-        msg: "Error: ${e.toString()}",
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
+        msg: _signupErrorMessage(e),
         backgroundColor: Colors.redAccent,
         textColor: Colors.white,
-        fontSize: 14.0,
       );
+      return null;
+    } catch (_) {
+      Fluttertoast.showToast(
+        msg: "Signup failed. Please try again.",
+        backgroundColor: Colors.redAccent,
+        textColor: Colors.white,
+      );
+      return null;
     }
   }
 
-  Future<void> login({
+  Future<UserModel?> login({
     required String email,
     required String password,
-    required BuildContext context,
   }) async {
     try {
-      await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: email, password: password);
-
-      Fluttertoast.showToast(
-        msg: "Login successful!",
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.green,
-        textColor: Colors.white,
-        fontSize: 14.0,
+      final UserCredential userCredential =
+          await _auth.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: password.trim(),
       );
 
-      Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => BottomNavigation()));
-    } on FirebaseAuthException catch (e) {
-      String message = "";
-      if (e.code == "user-not-found") {
-        message = "No user found for that email.";
-      } else if (e.code == "wrong-password") {
-        message = "Wrong password provided for that user.";
-      } else {
-        message = e.message ?? "Login failed.";
+      final User? user = userCredential.user;
+      if (user == null) return null;
+
+      if (!user.emailVerified) {
+        Fluttertoast.showToast(
+          msg: "Please verify your email before logging in.",
+          backgroundColor: Colors.orange,
+          textColor: Colors.white,
+        );
+        await _auth.signOut();
+        return null;
       }
 
-      Fluttertoast.showToast(
-        msg: message,
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.black87,
-        textColor: Colors.white,
-        fontSize: 14.0,
+      final DocumentSnapshot snapshot =
+          await _firestore.collection("users").doc(user.uid).get();
+
+      if (!snapshot.exists) {
+        Fluttertoast.showToast(
+          msg: "User profile not found.",
+          backgroundColor: Colors.redAccent,
+          textColor: Colors.white,
+        );
+        return null;
+      }
+
+      final UserModel loggedInUser = UserModel.fromMap(
+        snapshot.id,
+        snapshot.data() as Map<String, dynamic>,
       );
-    } catch (e) {
+
+      return loggedInUser;
+    } on FirebaseAuthException catch (e) {
       Fluttertoast.showToast(
-        msg: "Error: ${e.toString()}",
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
+        msg: _loginErrorMessage(e),
         backgroundColor: Colors.redAccent,
         textColor: Colors.white,
-        fontSize: 14.0,
       );
+      return null;
+    } catch (_) {
+      Fluttertoast.showToast(
+        msg: "Network error. Check your internet connection.",
+        backgroundColor: Colors.redAccent,
+        textColor: Colors.white,
+      );
+      return null;
     }
   }
 
-  Future<void> logout(BuildContext context) async {
-    await FirebaseAuth.instance.signOut();
-
-    Fluttertoast.showToast(
-      msg: "Logged out successfully.",
-      toastLength: Toast.LENGTH_LONG,
-      gravity: ToastGravity.BOTTOM,
-      backgroundColor: Colors.green,
-      textColor: Colors.white,
-      fontSize: 14.0,
-    );
-
-    Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => LoginView()));
-  }
-
-  Future<void> resetPassword({
-    required String email,
-    required BuildContext context,
-  }) async {
+  Future<void> resetPassword(String email) async {
     try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      await _auth.sendPasswordResetEmail(email: email.trim());
 
       Fluttertoast.showToast(
         msg: "Password reset email sent!",
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
         backgroundColor: Colors.green,
         textColor: Colors.white,
-        fontSize: 14.0,
       );
-
-      Navigator.pop(context);
     } on FirebaseAuthException catch (e) {
-      String message = e.message ?? "Failed to send password reset email.";
-
       Fluttertoast.showToast(
-        msg: message,
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.black87,
-        textColor: Colors.white,
-        fontSize: 14.0,
-      );
-    } catch (e) {
-      Fluttertoast.showToast(
-        msg: "Error: ${e.toString()}",
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
+        msg: e.message ?? "Failed to send reset email.",
         backgroundColor: Colors.redAccent,
         textColor: Colors.white,
-        fontSize: 14.0,
       );
     }
   }
 
+  Future<void> logout() async {
+    await _auth.signOut();
+  }
 
+  Stream<User?> get authStateChanges => _auth.authStateChanges();
+  User? get currentUser => _auth.currentUser;
+
+  String _signupErrorMessage(FirebaseAuthException e) {
+    switch (e.code) {
+      case "email-already-in-use":
+        return "This email is already registered.";
+      case "weak-password":
+        return "Password must be at least 6 characters.";
+      case "invalid-email":
+        return "Invalid email address.";
+      default:
+        return e.message ?? "Signup failed.";
+    }
+  }
+
+  String _loginErrorMessage(FirebaseAuthException e) {
+    switch (e.code) {
+      case "user-not-found":
+        return "No account found for this email.";
+      case "wrong-password":
+        return "Incorrect password.";
+      case "invalid-email":
+        return "Invalid email address.";
+      default:
+        return e.message ?? "Login failed.";
+    }
+  }
 }
+      

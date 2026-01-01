@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../view/home/home_view.dart';
 import '../view/categories/categories_view.dart';
-import '../view/home/bookings_view.dart';
+import '../view/bookings/bookings_view.dart';
 import '../view/chat/chat_list_view.dart';
 import '../view/profile/profile_view.dart';
 
