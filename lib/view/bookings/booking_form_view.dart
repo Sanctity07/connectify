@@ -53,30 +53,59 @@ class _BookingFormViewState extends State<BookingFormView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Book Provider")),
+      appBar: AppBar(
+        title: const Text("Book Provider"),
+        backgroundColor: Colors.deepPurple,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Text(
+                "Service: ${widget.subServiceKey}",
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
               TextFormField(
                 controller: addressController,
-                decoration: const InputDecoration(labelText: "Address"),
+                decoration: const InputDecoration(
+                  labelText: "Address",
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.location_on),
+                ),
                 validator: (val) =>
                     val == null || val.isEmpty ? "Enter your address" : null,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: descController,
-                decoration: const InputDecoration(labelText: "Description"),
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: "Description",
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.description),
+                ),
               ),
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: isLoading ? null : submitBooking,
-                child: isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text("Submit Booking"),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: isLoading ? null : submitBooking,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text("Submit Booking",
+                          style: TextStyle(fontSize: 16)),
+                ),
               ),
             ],
           ),

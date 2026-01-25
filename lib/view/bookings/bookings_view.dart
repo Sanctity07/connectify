@@ -25,7 +25,7 @@ class BookingsView extends StatelessWidget {
         final userData = snapshot.data!.data() as Map<String, dynamic>;
         final role = userData['role'] ?? 'customer';
 
-        // ---------- PROVIDER VIEW ----------
+        //  PROVIDER VIEW 
         if (role == 'provider_verified' || role == 'provider') {
           final bookingsQuery = FirebaseFirestore.instance
               .collection('bookings')

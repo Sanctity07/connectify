@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../view/home/home_view.dart';
 import '../view/categories/categories_view.dart';
 import '../view/bookings/bookings_view.dart';
-import '../view/chat/chat_list_view.dart';
 import '../view/profile/profile_view.dart';
 
 class BottomNavigation extends StatefulWidget {
@@ -42,7 +41,6 @@ class _BottomNavigationState extends State<BottomNavigation> {
           HomeView(),
           CategoriesView(),
           BookingsView(),
-          ChatListView(),
           ProfileView(),
         ],
       ),
@@ -63,12 +61,11 @@ class _BottomNavigationState extends State<BottomNavigation> {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(5, (index) {
+          children: List.generate(4, (index) {
             final icons = [
               Icons.home_rounded,
               Icons.category_rounded,
               Icons.book_online_rounded,
-              Icons.chat_rounded,
               Icons.person_rounded,
             ];
 

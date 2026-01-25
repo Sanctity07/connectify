@@ -1,11 +1,10 @@
 // ignore_for_file: deprecated_member_use
-
-import 'package:connectify/services/auth_services.dart';
 import 'package:connectify/view/bookings/booking_form_view.dart';
 import 'package:connectify/view/profile/profile_view.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -27,6 +26,7 @@ class _HomeViewState extends State<HomeView> {
 
   int activeIndex = 0;
   String? username;
+  String searchQuery = '';
 
   @override
   void initState() {
@@ -41,6 +41,7 @@ class _HomeViewState extends State<HomeView> {
           .collection("users")
           .doc(user.uid)
           .get();
+
       if (snapshot.exists) {
         final data = snapshot.data() as Map<String, dynamic>;
         setState(() {
@@ -71,13 +72,13 @@ class _HomeViewState extends State<HomeView> {
                   children: [
                     const SizedBox(height: 12),
 
-                    // Profile Row
+                    /// PROFILE ROW
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const ProfileView(),
+                            builder: (_) => const ProfileView(),
                           ),
                         );
                       },
@@ -104,9 +105,8 @@ class _HomeViewState extends State<HomeView> {
                               children: [
                                 const CircleAvatar(
                                   radius: 14,
-                                  backgroundImage: AssetImage(
-                                    'assets/images/onboard1.jpg',
-                                  ),
+                                  backgroundImage:
+                                      AssetImage('assets/images/onboard1.jpg'),
                                 ),
                                 const SizedBox(width: 8),
                                 Column(
@@ -134,12 +134,13 @@ class _HomeViewState extends State<HomeView> {
                           Row(
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.location_on_outlined),
+                                icon:
+                                    const Icon(Icons.location_on_outlined),
                                 onPressed: () {},
                               ),
-                              const SizedBox(width: 10),
                               IconButton(
-                                icon: const Icon(Icons.shopping_bag_outlined),
+                                icon:
+                                    const Icon(Icons.shopping_bag_outlined),
                                 onPressed: () {},
                               ),
                             ],
@@ -150,7 +151,7 @@ class _HomeViewState extends State<HomeView> {
 
                     const SizedBox(height: 24),
 
-                    // Titles
+                    /// TITLES
                     const Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -173,9 +174,10 @@ class _HomeViewState extends State<HomeView> {
                         ),
                       ),
                     ),
+
                     const SizedBox(height: 24),
 
-                    // Search Bar
+                    /// SEARCH BAR
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -192,14 +194,22 @@ class _HomeViewState extends State<HomeView> {
                           ),
                         ],
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(Icons.search_rounded, color: Colors.grey),
-                          SizedBox(width: 10),
+                          const Icon(Icons.search_rounded,
+                              color: Colors.grey),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: TextField(
-                              decoration: InputDecoration(
-                                hintText: 'Search for services',
+                              onChanged: (value) {
+                                setState(() {
+                                  searchQuery =
+                                      value.toLowerCase().trim();
+                                });
+                              },
+                              decoration: const InputDecoration(
+                                hintText:
+                                    'Search for services (e.g plumber)',
                                 border: InputBorder.none,
                               ),
                             ),
@@ -210,13 +220,14 @@ class _HomeViewState extends State<HomeView> {
 
                     const SizedBox(height: 16),
 
-                    // Category Selector
+                    /// CATEGORY SELECTOR
                     SizedBox(
                       height: 42,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: categories.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 10),
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(width: 10),
                         itemBuilder: (context, index) {
                           final isActive = index == activeIndex;
 
@@ -227,28 +238,21 @@ class _HomeViewState extends State<HomeView> {
                               });
                             },
                             child: Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 18),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 18),
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                color: isActive ? Colors.black : Colors.white,
-                                borderRadius: BorderRadius.circular(30),
-                                boxShadow: [
-                                  if (!isActive)
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                ],
+                                color:
+                                    isActive ? Colors.black : Colors.white,
+                                borderRadius:
+                                    BorderRadius.circular(30),
                               ),
                               child: Text(
                                 categories[index],
                                 style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color:
-                                      isActive ? Colors.white : Colors.black87,
+                                  color: isActive
+                                      ? Colors.white
+                                      : Colors.black,
                                 ),
                               ),
                             ),
@@ -259,7 +263,7 @@ class _HomeViewState extends State<HomeView> {
 
                     const SizedBox(height: 16),
 
-                    // Available Providers List
+                    /// PROVIDERS LIST
                     Expanded(
                       child: StreamBuilder<QuerySnapshot>(
                         stream: FirebaseFirestore.instance
@@ -274,53 +278,83 @@ class _HomeViewState extends State<HomeView> {
 
                           final docs = snapshot.data!.docs;
 
-                          // Filter by category if not "All"
-                          final filtered = activeIndex == 0
-                              ? docs
-                              : docs.where((doc) {
-                                  final data =
-                                      doc.data() as Map<String, dynamic>;
-                                  final skills =
-                                      List<String>.from(data['skills'] ?? []);
-                                  return skills.contains(categories[activeIndex]);
-                                }).toList();
+                          final filtered = docs.where((doc) {
+                            final data =
+                                doc.data() as Map<String, dynamic>;
+                            final skills =
+                                List<String>.from(data['skills'] ?? []);
+
+                            final matchesCategory = activeIndex == 0
+                                ? true
+                                : skills.any((skill) =>
+                                    skill.toLowerCase() ==
+                                    categories[activeIndex]
+                                        .toLowerCase());
+
+                            final matchesSearch = searchQuery.isEmpty
+                                ? true
+                                : skills.any((skill) =>
+                                    skill
+                                        .toLowerCase()
+                                        .contains(searchQuery));
+
+                            return matchesCategory && matchesSearch;
+                          }).toList();
 
                           if (filtered.isEmpty) {
-                            return const Center(
-                                child: Text("No providers found"));
+                            return Center(
+                              child: Text(
+                                searchQuery.isNotEmpty
+                                    ? 'No providers found for "$searchQuery"'
+                                    : activeIndex == 0
+                                        ? 'No providers available'
+                                        : 'No providers for ${categories[activeIndex]}',
+                                style:
+                                    const TextStyle(fontSize: 16),
+                              ),
+                            );
                           }
 
                           return ListView.builder(
                             itemCount: filtered.length,
                             itemBuilder: (context, index) {
-                              final data =
-                                  filtered[index].data() as Map<String, dynamic>;
-                              final providerId = filtered[index].id;
-                              final skills =
-                                  (data['skills'] as List<dynamic>?)
-                                          ?.join(', ') ??
-                                      '';
+                              final data = filtered[index].data()
+                                  as Map<String, dynamic>;
+                              final providerId =
+                                  filtered[index].id;
+                              final skills = (data['skills']
+                                          as List<dynamic>?)
+                                      ?.join(', ') ??
+                                  '';
 
                               return Card(
-                                margin:
-                                    const EdgeInsets.symmetric(vertical: 6),
+                                margin: const EdgeInsets.symmetric(
+                                    vertical: 8),
                                 child: ListTile(
-                                  title: Text(data['userId'] ?? 'Provider'),
+                                  leading: const CircleAvatar(
+                                    backgroundImage: AssetImage(
+                                        'assets/images/onboard1.jpg'),
+                                  ),
+                                  title: Text(
+                                    data['username'] ?? 'Provider',
+                                    style: const TextStyle(
+                                        fontWeight:
+                                            FontWeight.bold),
+                                  ),
                                   subtitle: Text(skills),
                                   trailing: ElevatedButton(
                                     onPressed: () {
-                                      final customerId =
-                                          AuthServices().currentUser?.uid;
-                                      if (customerId == null) return;
-
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (_) => BookingFormView(
+                                          builder: (_) =>
+                                              BookingFormView(
                                             providerId: providerId,
                                             serviceId: 'service1',
-                                            subServiceKey:
-                                                skills.split(',').first,
+                                            subServiceKey: skills
+                                                .split(',')
+                                                .first
+                                                .trim(),
                                           ),
                                         ),
                                       );
