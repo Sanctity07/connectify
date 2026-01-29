@@ -29,8 +29,7 @@ class _LoginViewState extends State<LoginView> {
   }
 
   Future<void> _login() async {
-    if (emailController.text.isEmpty ||
-        passwordController.text.isEmpty) {
+    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
       Fluttertoast.showToast(
         msg: "Email and password required",
         backgroundColor: Colors.redAccent,
@@ -53,9 +52,22 @@ class _LoginViewState extends State<LoginView> {
         backgroundColor: Colors.green,
       );
 
+      final currentUser = AuthServices().currentUser;
+
+      if (currentUser == null) {
+        Fluttertoast.showToast(
+          msg: "Session expired. Please login again.",
+          backgroundColor: Colors.red,
+        );
+        return;
+      }
+
+      // Navigate to BottomNavigation with uid
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => BottomNavigation()),
+        MaterialPageRoute(
+          builder: (_) => BottomNavigation(uid: currentUser.uid),
+        ),
       );
     }
   }
@@ -95,21 +107,18 @@ class _LoginViewState extends State<LoginView> {
                       ),
                     ),
                     const SizedBox(height: 25),
-
                     _inputField(
                       controller: emailController,
                       hint: "Email",
                       icon: Icons.email,
                     ),
                     const SizedBox(height: 15),
-
                     _inputField(
                       controller: passwordController,
                       hint: "Password",
                       icon: Icons.lock,
                       obscure: true,
                     ),
-
                     TextButton(
                       onPressed: () {
                         Navigator.push(
@@ -124,7 +133,6 @@ class _LoginViewState extends State<LoginView> {
                         style: TextStyle(color: Colors.yellowAccent),
                       ),
                     ),
-
                     ElevatedButton(
                       onPressed: isLoading ? null : _login,
                       style: ElevatedButton.styleFrom(
@@ -150,7 +158,6 @@ class _LoginViewState extends State<LoginView> {
                               ),
                             ),
                     ),
-
                     TextButton(
                       onPressed: () {
                         Navigator.push(
