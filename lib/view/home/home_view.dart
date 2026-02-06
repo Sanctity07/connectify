@@ -16,7 +16,7 @@ class HomeView extends StatefulWidget {
 class _HomeViewState extends State<HomeView> {
   final List<String> categories = [
     'All',
-    'Cleaning',
+    'Cleaner',
     'IT Solutions',
     'Plumber',
     'Electrician',

@@ -13,83 +13,170 @@ class CategoryProvidersView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(category),
-        backgroundColor: Colors.deepPurple,
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('providers')
-            .where('status', isEqualTo: 'verified')
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      backgroundColor: const Color(0xFFF6F5EF),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 12),
 
-          final providers = snapshot.data!.docs.where((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            final skills = List<String>.from(data['skills'] ?? []);
-            return skills.any(
-              (skill) =>
-                  skill.toLowerCase() == category.toLowerCase(),
-            );
-          }).toList();
-
-          if (providers.isEmpty) {
-            return Center(
-              child: Text(
-                'No providers available for $category',
-                style: const TextStyle(fontSize: 16),
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: providers.length,
-            itemBuilder: (context, index) {
-              final data =
-                  providers[index].data() as Map<String, dynamic>;
-              final providerId = providers[index].id;
-              final skills =
-                  (data['skills'] as List<dynamic>?)?.join(', ') ?? '';
-
-              return Card(
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                child: ListTile(
-                  leading: const CircleAvatar(
-                    backgroundImage:
-                        AssetImage('assets/images/onboard1.jpg'),
+              /// HEADER (Home style)
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => Navigator.pop(context),
                   ),
-                  title: Text(
-                    data['username'] ?? 'Provider',
+                  const SizedBox(width: 8),
+                  Text(
+                    category,
                     style: const TextStyle(
-                      fontWeight: FontWeight.bold,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Urbanist',
                     ),
                   ),
-                  subtitle: Text(skills),
-                  trailing: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => BookingFormView(
-                            providerId: providerId,
-                            serviceId: 'service1',
-                            subServiceKey:
-                                skills.split(',').first.trim(),
-                          ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              /// PROVIDERS LIST
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('providers')
+                      .where('status', isEqualTo: 'verified')
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    }
+
+                    final providers = snapshot.data!.docs.where((doc) {
+                      final data =
+                          doc.data() as Map<String, dynamic>;
+                      final skills =
+                          List<String>.from(data['skills'] ?? []);
+                      return skills.any(
+                        (skill) =>
+                            skill.toLowerCase() ==
+                            category.toLowerCase(),
+                      );
+                    }).toList();
+
+                    if (providers.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'No providers available for $category',
+                          style: const TextStyle(fontSize: 16),
                         ),
                       );
-                    },
-                    child: const Text('Book Now'),
-                  ),
+                    }
+
+                    return ListView.builder(
+                      itemCount: providers.length,
+                      itemBuilder: (context, index) {
+                        final data = providers[index].data()
+                            as Map<String, dynamic>;
+                        final providerId = providers[index].id;
+                        final skills = (data['skills']
+                                    as List<dynamic>?)
+                                ?.join(', ') ??
+                            '';
+
+                        return Container(
+                          margin:
+                              const EdgeInsets.symmetric(vertical: 8),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.06),
+                                blurRadius: 12,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              const CircleAvatar(
+                                radius: 26,
+                                backgroundImage: AssetImage(
+                                  'assets/images/onboard1.jpg',
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+
+                              /// INFO
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      data['username'] ??
+                                          'Provider',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      skills,
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              /// BOOK BUTTON
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          BookingFormView(
+                                        providerId: providerId,
+                                        serviceId: 'service1',
+                                        subServiceKey: skills
+                                            .split(',')
+                                            .first
+                                            .trim(),
+                                      ),
+                                    ),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.black,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(20),
+                                  ),
+                                ),
+                                child: const Text('Book'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
                 ),
-              );
-            },
-          );
-        },
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

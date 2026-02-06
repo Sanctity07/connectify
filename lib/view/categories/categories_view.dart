@@ -12,7 +12,7 @@ class _CategoriesViewState extends State<CategoriesView> {
   String searchQuery = '';
 
   final List<Map<String, dynamic>> categories = [
-    {'name': 'Cleaning', 'icon': Icons.cleaning_services},
+    {'name': 'Cleaner', 'icon': Icons.cleaning_services},
     {'name': 'IT Solutions', 'icon': Icons.computer},
     {'name': 'Plumber', 'icon': Icons.plumbing},
     {'name': 'Electrician', 'icon': Icons.electrical_services},
@@ -32,112 +32,146 @@ class _CategoriesViewState extends State<CategoriesView> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F5EF),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 12),
 
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
-        title: const Text(
-          'Categories',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            onPressed: () {},
-          ),
-        ],
-
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: Container(
-              height: 44,
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(30),
+              /// HEADER (Same feel as Home)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Categories',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w600,
+                      fontFamily: 'Urbanist',
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.more_vert),
+                    onPressed: () {},
+                  ),
+                ],
               ),
-              child: TextField(
-                onChanged: (value) {
-                  setState(() {
-                    searchQuery = value;
-                  });
-                },
-                decoration: const InputDecoration(
-                  hintText: 'Search categories',
-                  border: InputBorder.none,
-                  icon: Icon(Icons.search),
+
+              const SizedBox(height: 20),
+
+              /// SEARCH BAR (Same as Home)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.search_rounded, color: Colors.grey),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        onChanged: (value) {
+                          setState(() {
+                            searchQuery = value;
+                          });
+                        },
+                        decoration: const InputDecoration(
+                          hintText: 'Search categories',
+                          border: InputBorder.none,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
+
+              const SizedBox(height: 24),
+
+              /// GRID
+              Expanded(
+                child: filteredCategories.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No categories found',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      )
+                    : GridView.builder(
+                        itemCount: filteredCategories.length,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                        ),
+                        itemBuilder: (context, index) {
+                          final category = filteredCategories[index];
+
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => CategoryProvidersView(
+                                    category: category['name'],
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color:
+                                        Colors.black.withOpacity(0.06),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    category['icon'] as IconData,
+                                    size: 44,
+                                    color: Colors.black,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    category['name'] as String,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
           ),
         ),
       ),
-
-      body: filteredCategories.isEmpty
-          ? const Center(
-              child: Text(
-                'No categories found',
-                style: TextStyle(fontSize: 16),
-              ),
-            )
-          : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: GridView.builder(
-                itemCount: filteredCategories.length,
-                gridDelegate:
-                    const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                ),
-                itemBuilder: (context, index) {
-                  final category = filteredCategories[index];
-
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => CategoryProvidersView(
-                            category: '${category['name']}',
-                          ),
-                        ),
-                      );
-                    },
-                    child: Card(
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            category['icon'] as IconData,
-                            size: 48,
-                            color: Colors.deepPurple,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            category['name'] as String,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
     );
   }
 }

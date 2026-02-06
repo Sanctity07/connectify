@@ -42,73 +42,155 @@ class _BookingFormViewState extends State<BookingFormView> {
     );
 
     if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Booking created successfully!")),
     );
-    Navigator.pop(context);
 
+    Navigator.pop(context);
     setState(() => isLoading = false);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Book Provider"),
-        backgroundColor: Colors.deepPurple,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Service: ${widget.subServiceKey}",
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: addressController,
-                decoration: const InputDecoration(
-                  labelText: "Address",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.location_on),
+      backgroundColor: const Color(0xFFF6F5EF),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 12),
+
+                /// HEADER
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      "Book Provider",
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.w600,
+                        fontFamily: 'Urbanist',
+                      ),
+                    ),
+                  ],
                 ),
-                validator: (val) =>
-                    val == null || val.isEmpty ? "Enter your address" : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: descController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: "Description",
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.description),
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: isLoading ? null : submitBooking,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+
+                const SizedBox(height: 20),
+
+                /// FORM CARD
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        /// SERVICE
+                        Text(
+                          "Service: ${widget.subServiceKey}",
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        _inputField(
+                          controller: addressController,
+                          hint: "Address",
+                          icon: Icons.location_on,
+                          validator: (val) =>
+                              val == null || val.isEmpty
+                                  ? "Enter your address"
+                                  : null,
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        _inputField(
+                          controller: descController,
+                          hint: "Description (optional)",
+                          icon: Icons.description,
+                          maxLines: 3,
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed:
+                                isLoading ? null : submitBooking,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black,
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(30),
+                              ),
+                            ),
+                            child: isLoading
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                : const Text(
+                                    "Submit Booking",
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Submit Booking",
-                          style: TextStyle(fontSize: 16)),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _inputField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    int maxLines = 1,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      validator: validator,
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixIcon: Icon(icon),
+        filled: true,
+        fillColor: Colors.grey.shade100,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: BorderSide.none,
         ),
       ),
     );

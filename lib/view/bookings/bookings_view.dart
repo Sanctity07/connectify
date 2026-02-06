@@ -36,22 +36,51 @@ class BookingsView extends StatelessWidget {
             role == 'provider' || role == 'provider_verified';
 
         return Scaffold(
-          appBar: AppBar(
-            title: Text(isProvider ? "Job Requests" : "My Bookings"),
-            centerTitle: true,
-          ),
-          body: Padding(
-            padding: const EdgeInsets.all(12),
-            child: isProvider
-                ? _providerBookings(uid)
-                : _customerBookings(uid),
+          backgroundColor: const Color(0xFFF6F5EF),
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 12),
+
+                  /// HEADER
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        isProvider ? "Job Requests" : "My Bookings",
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'Urbanist',
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  Expanded(
+                    child: isProvider
+                        ? _providerBookings(uid)
+                        : _customerBookings(uid),
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },
     );
   }
 
-  /// ---------------- PROVIDER VIEW ----------------
+  /// ---------------- PROVIDER BOOKINGS ----------------
   Widget _providerBookings(String uid) {
     final bookingsQuery = FirebaseFirestore.instance
         .collection('bookings')
@@ -78,7 +107,7 @@ class BookingsView extends StatelessWidget {
 
         return ListView.separated(
           itemCount: docs.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final data =
                 docs[index].data() as Map<String, dynamic>;
@@ -88,7 +117,7 @@ class BookingsView extends StatelessWidget {
             final customerId = data['customerId'] ?? 'Unknown';
 
             return _bookingCard(
-              title: "Customer ID",
+              title: "Customer",
               value: customerId,
               description: description,
               status: status,
@@ -100,7 +129,7 @@ class BookingsView extends StatelessWidget {
     );
   }
 
-  /// ---------------- CUSTOMER VIEW ----------------
+  /// ---------------- CUSTOMER BOOKINGS ----------------
   Widget _customerBookings(String uid) {
     final bookingsQuery = FirebaseFirestore.instance
         .collection('bookings')
@@ -127,7 +156,7 @@ class BookingsView extends StatelessWidget {
 
         return ListView.separated(
           itemCount: docs.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final data =
                 docs[index].data() as Map<String, dynamic>;
@@ -136,7 +165,7 @@ class BookingsView extends StatelessWidget {
             final providerId = data['providerId'] ?? 'Unknown';
 
             return _bookingCard(
-              title: "Provider ID",
+              title: "Provider",
               value: providerId,
               description: description,
               status: status,
@@ -147,7 +176,7 @@ class BookingsView extends StatelessWidget {
     );
   }
 
-
+  /// ---------------- BOOKING CARD ----------------
   Widget _bookingCard({
     required String title,
     required String value,
@@ -155,36 +184,45 @@ class BookingsView extends StatelessWidget {
     required String status,
     List<Widget>? actions,
   }) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "$title: $value",
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "$title: $value",
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
             ),
-            const SizedBox(height: 6),
-            Text(description),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _statusChip(status),
-                if (actions != null)
-                  Wrap(spacing: 8, children: actions),
-              ],
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            description.isEmpty
+                ? "No description provided"
+                : description,
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _statusChip(status),
+              if (actions != null)
+                Wrap(spacing: 8, children: actions),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -199,12 +237,23 @@ class BookingsView extends StatelessWidget {
       _ => Colors.grey,
     };
 
-    return Chip(
-      label: Text(
-        status.toUpperCase(),
-        style: const TextStyle(color: Colors.white),
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 6,
       ),
-      backgroundColor: color,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        status.toUpperCase(),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 
@@ -216,10 +265,21 @@ class BookingsView extends StatelessWidget {
       return [
         ElevatedButton(
           onPressed: () => vm.acceptJob(bookingId),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.black,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
           child: const Text("Accept"),
         ),
         OutlinedButton(
           onPressed: () => vm.declineJob(bookingId),
+          style: OutlinedButton.styleFrom(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
           child: const Text("Decline"),
         ),
       ];
@@ -229,6 +289,12 @@ class BookingsView extends StatelessWidget {
       return [
         ElevatedButton(
           onPressed: () => vm.startJob(bookingId),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.black,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
           child: const Text("Start Job"),
         ),
       ];
@@ -238,6 +304,12 @@ class BookingsView extends StatelessWidget {
       return [
         ElevatedButton(
           onPressed: () => vm.completeJob(bookingId),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.black,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
           child: const Text("Complete"),
         ),
       ];

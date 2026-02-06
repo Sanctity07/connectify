@@ -22,13 +22,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset('assets/images/background.jpg', fit: BoxFit.cover),
+          Image.asset(
+            'assets/images/background.jpg',
+            fit: BoxFit.cover,
+          ),
 
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.black.withOpacity(0.65),
+                  Colors.black.withOpacity(0.7),
                   Colors.black.withOpacity(0.35),
                 ],
                 begin: Alignment.bottomCenter,
@@ -48,23 +51,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       setState(() => isLastPage = index == 2);
                     },
                     children: [
-                      buildPage(
+                      _buildPage(
                         image: 'assets/images/onboard1.jpg',
-                        title: "Connect with Friends",
+                        title: "Find Trusted Professionals",
                         description:
-                            "Meet new people, share moments, and stay connected with your community.",
+                            "Discover verified service providers near you — from electricians and plumbers to cleaners and tutors.",
                       ),
-                      buildPage(
+                      _buildPage(
                         image: 'assets/images/onboard2.jpg',
-                        title: "Discover New Products",
+                        title: "Book Services Instantly",
                         description:
-                            "Explore trending items, local stores, and global sellers, all in one app.",
+                            "Choose a service, book in seconds, and track job progress all in one simple, secure platform.",
                       ),
-                      buildPage(
+                      _buildPage(
                         image: 'assets/images/onboard3.jpg',
-                        title: "Shop. Chat. Earn.",
+                        title: "Work. Earn. Grow.",
                         description:
-                            "Buy and sell easily, chat instantly, and grow your influence and income.",
+                            "Service providers can accept jobs, manage bookings, and build trust with ratings and reviews.",
                       ),
                     ],
                   ),
@@ -87,7 +90,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 const SizedBox(height: 40),
 
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
                   child: SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -96,7 +99,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const SignupView(),
+                              builder: (_) => const SignupView(),
                             ),
                           );
                         } else {
@@ -108,7 +111,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white.withOpacity(0.9),
-                        foregroundColor: Colors.blueAccent.shade700,
+                        foregroundColor: Colors.deepPurple,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
@@ -135,7 +138,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget buildPage({
+  /// ---------------- BUILD PAGE ----------------
+  Widget _buildPage({
     required String image,
     required String title,
     required String description,
@@ -143,16 +147,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 24,
+          vertical: 40,
+        ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.blueAccent.withOpacity(0.3),
+                    color: Colors.deepPurple.withOpacity(0.35),
                     blurRadius: 20,
                     offset: const Offset(0, 10),
                   ),
@@ -161,12 +167,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               clipBehavior: Clip.antiAlias,
               child: Image.asset(
                 image,
-                height:
-                    MediaQuery.of(context).size.height *
-                    0.35, 
+                height: MediaQuery.of(context).size.height * 0.35,
                 fit: BoxFit.cover,
               ),
             ),
+
             const SizedBox(height: 40),
 
             Text(
@@ -179,7 +184,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 letterSpacing: 0.8,
                 shadows: [
                   Shadow(
-                    color: Colors.blueAccent.withOpacity(0.6),
+                    color: Colors.deepPurple.withOpacity(0.6),
                     blurRadius: 10,
                     offset: const Offset(2, 2),
                   ),
@@ -190,7 +195,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const SizedBox(height: 16),
 
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
                 description,
                 textAlign: TextAlign.center,

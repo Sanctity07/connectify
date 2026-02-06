@@ -12,10 +12,9 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen>
-  with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
-
 
   @override
   void initState() {
@@ -33,10 +32,13 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    Timer(const Duration(seconds: 5), () {
+    Timer(const Duration(seconds: 4), () {
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+        MaterialPageRoute(
+          builder: (_) => const OnboardingScreen(),
+        ),
       );
     });
   }
@@ -62,8 +64,8 @@ class _SplashScreenState extends State<SplashScreen>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.black.withOpacity(0.5),
-                  Colors.black.withOpacity(0.3),
+                  Colors.black.withOpacity(0.65),
+                  Colors.black.withOpacity(0.35),
                 ],
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
@@ -78,35 +80,38 @@ class _SplashScreenState extends State<SplashScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(
-                    Icons.flutter_dash,
+                    Icons.handyman_rounded,
                     size: 100,
                     color: Colors.yellowAccent,
                   ),
                   const SizedBox(height: 20),
+
                   Text(
                     "Connectify",
                     style: TextStyle(
                       fontFamily: 'Pacifico',
-                      fontSize: 45,
+                      fontSize: 44,
                       color: Colors.white,
                       letterSpacing: 2.5,
                       shadows: [
                         Shadow(
-                          color: Colors.blueAccent.withOpacity(0.7),
+                          color: Colors.deepPurple.withOpacity(0.8),
                           blurRadius: 12,
                           offset: const Offset(2, 3),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 10),
+
+                  const SizedBox(height: 12),
+
                   Text(
-                    "Stay Connected. Always.",
+                    "Find. Book. Get It Done.",
                     style: TextStyle(
-                      fontFamily: 'Poppins', 
+                      fontFamily: 'Poppins',
                       color: Colors.white70,
                       fontSize: 16,
-                      letterSpacing: 1,
+                      letterSpacing: 1.2,
                     ),
                   ),
                 ],
