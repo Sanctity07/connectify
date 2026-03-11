@@ -20,9 +20,40 @@ class BookingFormView extends StatefulWidget {
 
 class _BookingFormViewState extends State<BookingFormView> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController addressController = TextEditingController();
-  final TextEditingController descController = TextEditingController();
+  final addressController = TextEditingController();
+  final descController = TextEditingController();
   bool isLoading = false;
+  late String selectedService;
+
+  // Expanded service list — keep in sync with categories
+  final List<String> availableServices = [
+    'Cleaning',
+    'IT Solutions',
+    'Plumbing',
+    'Electrical',
+    'Carpentry',
+    'Painting',
+    'Gardening',
+    'Tutoring',
+    'Other',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-select based on what was passed in, fallback to first item
+    final passed = widget.subServiceKey.trim();
+    selectedService = availableServices.contains(passed)
+        ? passed
+        : availableServices.first;
+  }
+
+  @override
+  void dispose() {
+    addressController.dispose();
+    descController.dispose();
+    super.dispose();
+  }
 
   Future<void> submitBooking() async {
     if (!_formKey.currentState!.validate()) return;
@@ -36,17 +67,15 @@ class _BookingFormViewState extends State<BookingFormView> {
       customerId: uid,
       providerId: widget.providerId,
       serviceId: widget.serviceId,
-      subServiceKey: widget.subServiceKey,
+      subServiceKey: selectedService,
       address: addressController.text.trim(),
       description: descController.text.trim(),
     );
 
     if (!mounted) return;
-
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Booking created successfully!")),
+      const SnackBar(content: Text("Booking submitted! Waiting for provider.")),
     );
-
     Navigator.pop(context);
     setState(() => isLoading = false);
   }
@@ -64,7 +93,7 @@ class _BookingFormViewState extends State<BookingFormView> {
               children: [
                 const SizedBox(height: 12),
 
-                /// HEADER
+                // HEADER
                 Row(
                   children: [
                     IconButton(
@@ -85,7 +114,7 @@ class _BookingFormViewState extends State<BookingFormView> {
 
                 const SizedBox(height: 20),
 
-                /// FORM CARD
+                // FORM CARD
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -104,34 +133,63 @@ class _BookingFormViewState extends State<BookingFormView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        /// SERVICE
-                        Text(
-                          "Service: ${widget.subServiceKey}",
-                          style: const TextStyle(
-                            fontSize: 18,
+                        const Text(
+                          "What do you need?",
+                          style: TextStyle(
+                            fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
 
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 12),
+
+                        // Service dropdown
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              value: selectedService,
+                              icon: const Icon(Icons.expand_more),
+                              items: availableServices
+                                  .map((s) => DropdownMenuItem(
+                                        value: s,
+                                        child: Text(s),
+                                      ))
+                                  .toList(),
+                              onChanged: (v) {
+                                if (v != null) {
+                                  setState(() => selectedService = v);
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
 
                         _inputField(
                           controller: addressController,
-                          hint: "Address",
+                          hint: "Address / Location",
                           icon: Icons.location_on,
-                          validator: (val) =>
-                              val == null || val.isEmpty
-                                  ? "Enter your address"
-                                  : null,
+                          validator: (val) => val == null || val.isEmpty
+                              ? "Enter your address"
+                              : null,
                         ),
 
                         const SizedBox(height: 16),
 
                         _inputField(
                           controller: descController,
-                          hint: "Description (optional)",
+                          hint:
+                              "Describe the job (e.g. fix leaking kitchen pipe)",
                           icon: Icons.description,
-                          maxLines: 3,
+                          maxLines: 4,
                         ),
 
                         const SizedBox(height: 24),
@@ -139,21 +197,18 @@ class _BookingFormViewState extends State<BookingFormView> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed:
-                                isLoading ? null : submitBooking,
+                            onPressed: isLoading ? null : submitBooking,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.black,
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 16),
                               shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(30),
-                              ),
+                                  borderRadius:
+                                      BorderRadius.circular(30)),
                             ),
                             child: isLoading
                                 ? const CircularProgressIndicator(
-                                    color: Colors.white,
-                                  )
+                                    color: Colors.white)
                                 : const Text(
                                     "Submit Booking",
                                     style: TextStyle(fontSize: 16),
@@ -164,6 +219,8 @@ class _BookingFormViewState extends State<BookingFormView> {
                     ),
                   ),
                 ),
+
+                const SizedBox(height: 24),
               ],
             ),
           ),
