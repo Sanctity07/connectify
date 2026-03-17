@@ -1,11 +1,12 @@
 // ignore_for_file: deprecated_member_use
 
-import 'package:connectify/view/bookings/booking_form_view.dart';
-import 'package:connectify/view/profile/profile_view.dart';
-import 'package:connectify/view/provider/provider_public_profile_view.dart';
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectify/view/home/active_bookings_sheet.dart';
+import 'package:connectify/view/home/location_sheet.dart';
+import 'package:connectify/view/home/provider_card.dart';
+import 'package:connectify/view/profile/profile_view.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -15,7 +16,7 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  final List<String> categories = [
+  static const List<String> _categories = [
     'All',
     'Cleaner',
     'IT Solutions',
@@ -27,10 +28,11 @@ class _HomeViewState extends State<HomeView> {
     'Tutoring',
   ];
 
-  int activeIndex = 0;
-  String? username;
-  String? userPhoto;
-  String searchQuery = '';
+  int _activeIndex = 0;
+  String? _username;
+  String? _userPhoto;
+  String _searchQuery = '';
+  String? _savedLocation;
 
   @override
   void initState() {
@@ -40,27 +42,30 @@ class _HomeViewState extends State<HomeView> {
 
   Future<void> _loadUser() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-      if (snapshot.exists) {
-        final data = snapshot.data() as Map<String, dynamic>;
-        setState(() {
-          username = data['username'] ?? user.displayName ?? 'Guest';
-          userPhoto = data['profilePhotoUrl'] ?? '';
-        });
-      } else {
-        setState(() {
-          username = user.displayName ?? 'Guest';
-          userPhoto = '';
-        });
-      }
+    if (user == null) {
+      setState(() {
+        _username = 'Guest';
+        _userPhoto = '';
+      });
+      return;
+    }
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+
+    if (snapshot.exists) {
+      final data = snapshot.data() as Map<String, dynamic>;
+      setState(() {
+        _username = data['username'] ?? user.displayName ?? 'Guest';
+        _userPhoto = data['profilePhotoUrl'] ?? '';
+        _savedLocation = data['location'] ?? '';
+      });
     } else {
       setState(() {
-        username = 'Guest';
-        userPhoto = '';
+        _username = user.displayName ?? 'Guest';
+        _userPhoto = '';
       });
     }
   }
@@ -72,86 +77,36 @@ class _HomeViewState extends State<HomeView> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: username == null
+          child: _username == null
               ? const Center(child: CircularProgressIndicator())
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 12),
 
-                    // ── TOP ROW ──────────────────────────────────────────
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        GestureDetector(
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const ProfileView()),
-                          ),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(30),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.08),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 14,
-                                  backgroundImage: (userPhoto != null &&
-                                          userPhoto!.isNotEmpty)
-                                      ? NetworkImage(userPhoto!)
-                                      : const AssetImage(
-                                              'assets/images/onboard1.jpg')
-                                          as ImageProvider,
-                                ),
-                                const SizedBox(width: 8),
-                                Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('Welcome',
-                                        style: TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.grey)),
-                                    Text(
-                                      username!,
-                                      style: const TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.location_on_outlined),
-                              onPressed: () {},
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.shopping_bag_outlined),
-                              onPressed: () {},
-                            ),
-                          ],
-                        ),
-                      ],
+                    // ── TOP ROW ───────────────────────────────────
+                    _TopRow(
+                      username: _username!,
+                      userPhoto: _userPhoto ?? '',
+                      savedLocation: _savedLocation,
+                      onProfileTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const ProfileView()),
+                      ).then((_) => _loadUser()),
+                      onLocationTap: () => showLocationSheet(
+                        context,
+                        currentLocation: _savedLocation,
+                        onLocationSaved: (loc) =>
+                            setState(() => _savedLocation = loc),
+                      ),
+                      onBookingsTap: () =>
+                          showActiveBookingsSheet(context),
                     ),
 
                     const SizedBox(height: 24),
 
+                    // ── HEADLINE ──────────────────────────────────
                     const Text(
                       'Smart Home',
                       style: TextStyle(
@@ -171,178 +126,29 @@ class _HomeViewState extends State<HomeView> {
 
                     const SizedBox(height: 24),
 
-                    // ── SEARCH ───────────────────────────────────────────
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 15,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.search_rounded,
-                              color: Colors.grey),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: TextField(
-                              onChanged: (v) => setState(() =>
-                                  searchQuery = v.toLowerCase().trim()),
-                              decoration: const InputDecoration(
-                                hintText:
-                                    'Search for services (e.g plumber)',
-                                border: InputBorder.none,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                    // ── SEARCH ────────────────────────────────────
+                    _SearchBar(
+                      onChanged: (v) => setState(
+                          () => _searchQuery = v.toLowerCase().trim()),
                     ),
 
                     const SizedBox(height: 16),
 
-                    // ── CATEGORY CHIPS ───────────────────────────────────
-                    SizedBox(
-                      height: 42,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: categories.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(width: 10),
-                        itemBuilder: (context, index) {
-                          final isActive = index == activeIndex;
-                          return GestureDetector(
-                            onTap: () =>
-                                setState(() => activeIndex = index),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 18),
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: isActive
-                                    ? Colors.black
-                                    : Colors.white,
-                                borderRadius:
-                                    BorderRadius.circular(30),
-                              ),
-                              child: Text(
-                                categories[index],
-                                style: TextStyle(
-                                  color: isActive
-                                      ? Colors.white
-                                      : Colors.black,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                    // ── CATEGORY CHIPS ────────────────────────────
+                    _CategoryChips(
+                      categories: _categories,
+                      activeIndex: _activeIndex,
+                      onTap: (i) => setState(() => _activeIndex = i),
                     ),
 
                     const SizedBox(height: 16),
 
-                    // ── PROVIDERS ────────────────────────────────────────
+                    // ── PROVIDER LIST ─────────────────────────────
                     Expanded(
-                      child: StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('providers')
-                            .where('status', isEqualTo: 'verified')
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) {
-                            return const Center(
-                                child: CircularProgressIndicator());
-                          }
-
-                          final docs = snapshot.data!.docs;
-
-                          final filtered = docs.where((doc) {
-                            final data =
-                                doc.data() as Map<String, dynamic>;
-                            final skills = List<String>.from(
-                                data['skills'] ?? []);
-
-                            final matchesCategory = activeIndex == 0
-                                ? true
-                                : skills.any((s) =>
-                                    s.toLowerCase() ==
-                                    categories[activeIndex]
-                                        .toLowerCase());
-
-                            final matchesSearch = searchQuery.isEmpty
-                                ? true
-                                : skills.any((s) => s
-                                    .toLowerCase()
-                                    .contains(searchQuery));
-
-                            return matchesCategory && matchesSearch;
-                          }).toList();
-
-                          if (filtered.isEmpty) {
-                            return Center(
-                              child: Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.search_off,
-                                      size: 48,
-                                      color: Colors.grey.shade300),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    searchQuery.isNotEmpty
-                                        ? 'No results for "$searchQuery"'
-                                        : 'No providers available',
-                                    style: const TextStyle(
-                                        color: Colors.grey),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-
-                          return ListView.separated(
-                            itemCount: filtered.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(height: 12),
-                            itemBuilder: (context, index) {
-                              final data = filtered[index].data()
-                                  as Map<String, dynamic>;
-                              final providerId = filtered[index].id;
-                              final skills = (data['skills']
-                                          as List<dynamic>?)
-                                      ?.join(', ') ??
-                                  '';
-                              final online =
-                                  data['online'] ?? false;
-                              final ratingAvg =
-                                  (data['ratingAvg'] ?? 0)
-                                      .toDouble();
-                              final ratingCount =
-                                  data['ratingCount'] ?? 0;
-                              final photoUrl =
-                                  data['profilePhotoUrl'] ?? '';
-                              final bio = data['bio'] ?? '';
-
-                              return _ProviderCard(
-                                providerId: providerId,
-                                data: data,
-                                skills: skills,
-                                online: online,
-                                ratingAvg: ratingAvg,
-                                ratingCount: ratingCount,
-                                photoUrl: photoUrl,
-                                bio: bio,
-                              );
-                            },
-                          );
-                        },
+                      child: _ProviderList(
+                        categories: _categories,
+                        activeIndex: _activeIndex,
+                        searchQuery: _searchQuery,
                       ),
                     ),
                   ],
@@ -353,200 +159,374 @@ class _HomeViewState extends State<HomeView> {
   }
 }
 
-// ── PROVIDER CARD ─────────────────────────────────────────────────────────────
-class _ProviderCard extends StatelessWidget {
-  final String providerId;
-  final Map<String, dynamic> data;
-  final String skills;
-  final bool online;
-  final double ratingAvg;
-  final int ratingCount;
-  final String photoUrl;
-  final String bio;
+// ── TOP ROW ───────────────────────────────────────────────────────────────────
+class _TopRow extends StatelessWidget {
+  final String username;
+  final String userPhoto;
+  final String? savedLocation;
+  final VoidCallback onProfileTap;
+  final VoidCallback onLocationTap;
+  final VoidCallback onBookingsTap;
 
-  const _ProviderCard({
-    required this.providerId,
-    required this.data,
-    required this.skills,
-    required this.online,
-    required this.ratingAvg,
-    required this.ratingCount,
-    required this.photoUrl,
-    required this.bio,
+  const _TopRow({
+    required this.username,
+    required this.userPhoto,
+    required this.savedLocation,
+    required this.onProfileTap,
+    required this.onLocationTap,
+    required this.onBookingsTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Fetch the real name from the users collection — this is the source of truth
-    return FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance
-          .collection('users')
-          .doc(providerId)
-          .get(),
-      builder: (context, userSnap) {
-        final name = userSnap.hasData && userSnap.data!.exists
-            ? (userSnap.data!.data() as Map<String, dynamic>)['username'] ??
-                data['username'] ??
-                'Provider'
-            : data['username'] ?? 'Provider';
-
-        return GestureDetector(
-          // Tap anywhere on card → public profile
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) =>
-                  ProviderPublicProfileView(providerId: providerId),
-            ),
-          ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Profile pill
+        GestureDetector(
+          onTap: onProfileTap,
           child: Container(
-            padding: const EdgeInsets.all(14),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(30),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withOpacity(0.08),
                   blurRadius: 12,
-                  offset: const Offset(0, 6),
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: Row(
               children: [
-                // Avatar + online dot
-                Stack(
+                CircleAvatar(
+                  radius: 14,
+                  backgroundImage: userPhoto.isNotEmpty
+                      ? NetworkImage(userPhoto)
+                      : const AssetImage('assets/images/onboard1.jpg')
+                          as ImageProvider,
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CircleAvatar(
-                      radius: 28,
-                      backgroundImage: photoUrl.isNotEmpty
-                          ? NetworkImage(photoUrl)
-                          : const AssetImage('assets/images/onboard1.jpg')
-                              as ImageProvider,
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: online ? Colors.green : Colors.grey,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                      ),
+                    const Text('Welcome',
+                        style:
+                            TextStyle(fontSize: 11, color: Colors.grey)),
+                    Text(
+                      username,
+                      style: const TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w600),
                     ),
                   ],
-                ),
-
-                const SizedBox(width: 12),
-
-                // Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 15),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(skills,
-                          style:
-                              const TextStyle(color: Colors.grey, fontSize: 12),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
-                      if (bio.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(bio,
-                            style: const TextStyle(
-                                color: Colors.grey, fontSize: 11),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
-                      ],
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          if (ratingCount > 0) ...[
-                            const Icon(Icons.star,
-                                size: 13, color: Colors.amber),
-                            const SizedBox(width: 2),
-                            Text(ratingAvg.toStringAsFixed(1),
-                                style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600)),
-                            Text(' ($ratingCount)',
-                                style: const TextStyle(
-                                    fontSize: 11, color: Colors.grey)),
-                          ] else ...[
-                            const Icon(Icons.star_border,
-                                size: 13, color: Colors.grey),
-                            const SizedBox(width: 2),
-                            const Text('New',
-                                style: TextStyle(
-                                    fontSize: 11, color: Colors.grey)),
-                          ],
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: online
-                                  ? Colors.green.withOpacity(0.1)
-                                  : Colors.grey.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              online ? 'Available' : 'Busy',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: online ? Colors.green : Colors.grey,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Book button — stopPropagation via onTap override
-                GestureDetector(
-                  onTap: online
-                      ? () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => BookingFormView(
-                                providerId: providerId,
-                                serviceId: 'service1',
-                                subServiceKey: skills.split(',').first.trim(),
-                              ),
-                            ),
-                          )
-                      : null,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: online ? Colors.black : Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      online ? "Book Now" : "Busy",
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: online ? Colors.white : Colors.grey,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
                 ),
               ],
             ),
           ),
+        ),
+
+        Row(
+          children: [
+            // Location button
+            GestureDetector(
+              onTap: onLocationTap,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 7),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.07),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.location_on,
+                      size: 16,
+                      color: (savedLocation?.isNotEmpty ?? false)
+                          ? Colors.deepPurple
+                          : Colors.grey,
+                    ),
+                    if (savedLocation != null &&
+                        savedLocation!.isNotEmpty) ...[
+                      const SizedBox(width: 4),
+                      Text(
+                        savedLocation!.length > 10
+                            ? '${savedLocation!.substring(0, 10)}…'
+                            : savedLocation!,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.deepPurple,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 8),
+
+            // Bag icon with live badge
+            _BookingsBadge(onTap: onBookingsTap),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// ── BOOKINGS BADGE ────────────────────────────────────────────────────────────
+class _BookingsBadge extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _BookingsBadge({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: uid == null
+          ? null
+          : FirebaseFirestore.instance
+              .collection('bookings')
+              .where('customerId', isEqualTo: uid)
+              .where('status',
+                  whereIn: ['pending', 'accepted', 'started'])
+              .snapshots(),
+      builder: (context, snap) {
+        final count = snap.data?.docs.length ?? 0;
+
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.07),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(Icons.shopping_bag_outlined, size: 20),
+                if (count > 0)
+                  Positioned(
+                    top: -6,
+                    right: -6,
+                    child: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: const BoxDecoration(
+                        color: Colors.deepPurple,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '$count',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ── SEARCH BAR ────────────────────────────────────────────────────────────────
+class _SearchBar extends StatelessWidget {
+  final ValueChanged<String> onChanged;
+
+  const _SearchBar({required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.search_rounded, color: Colors.grey),
+          const SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              onChanged: onChanged,
+              decoration: const InputDecoration(
+                hintText: 'Search for services (e.g plumber)',
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── CATEGORY CHIPS ────────────────────────────────────────────────────────────
+class _CategoryChips extends StatelessWidget {
+  final List<String> categories;
+  final int activeIndex;
+  final ValueChanged<int> onTap;
+
+  const _CategoryChips({
+    required this.categories,
+    required this.activeIndex,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 42,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: categories.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (context, index) {
+          final isActive = index == activeIndex;
+          return GestureDetector(
+            onTap: () => onTap(index),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: isActive ? Colors.black : Colors.white,
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: Text(
+                categories[index],
+                style: TextStyle(
+                  color: isActive ? Colors.white : Colors.black,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ── PROVIDER LIST ─────────────────────────────────────────────────────────────
+class _ProviderList extends StatelessWidget {
+  final List<String> categories;
+  final int activeIndex;
+  final String searchQuery;
+
+  const _ProviderList({
+    required this.categories,
+    required this.activeIndex,
+    required this.searchQuery,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('providers')
+          .where('status', isEqualTo: 'verified')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final filtered = snapshot.data!.docs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          final skills =
+              List<String>.from(data['skills'] ?? []);
+
+          final matchesCategory = activeIndex == 0
+              ? true
+              : skills.any((s) =>
+                  s.toLowerCase() ==
+                  categories[activeIndex].toLowerCase());
+
+          final matchesSearch = searchQuery.isEmpty
+              ? true
+              : skills.any(
+                  (s) => s.toLowerCase().contains(searchQuery));
+
+          return matchesCategory && matchesSearch;
+        }).toList();
+
+        if (filtered.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.search_off,
+                    size: 48, color: Colors.grey.shade300),
+                const SizedBox(height: 12),
+                Text(
+                  searchQuery.isNotEmpty
+                      ? 'No results for "$searchQuery"'
+                      : 'No providers available',
+                  style: const TextStyle(color: Colors.grey),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.separated(
+          itemCount: filtered.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final data =
+                filtered[index].data() as Map<String, dynamic>;
+            final providerId = filtered[index].id;
+
+            return ProviderCard(
+              providerId: providerId,
+              data: data,
+              skills: (data['skills'] as List<dynamic>?)
+                      ?.join(', ') ??
+                  '',
+              online: data['online'] ?? false,
+              ratingAvg: (data['ratingAvg'] ?? 0).toDouble(),
+              ratingCount: data['ratingCount'] ?? 0,
+              photoUrl: data['profilePhotoUrl'] ?? '',
+              bio: data['bio'] ?? '',
+            );
+          },
         );
       },
     );

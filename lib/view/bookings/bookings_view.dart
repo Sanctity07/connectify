@@ -41,7 +41,7 @@ class BookingsView extends StatelessWidget {
                 children: [
                   const SizedBox(height: 12),
 
-                  // HEADER
+                 
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
@@ -56,7 +56,7 @@ class BookingsView extends StatelessWidget {
 
                   const SizedBox(height: 12),
 
-                  // TABS
+                
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Container(

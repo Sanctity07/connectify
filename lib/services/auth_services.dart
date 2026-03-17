@@ -38,10 +38,7 @@ class AuthServices {
         createdAt: DateTime.now(),
       );
 
-      await _firestore
-          .collection("users")
-          .doc(user.uid)
-          .set(newUser.toMap());
+      await _firestore.collection("users").doc(user.uid).set(newUser.toMap());
 
       return newUser;
     } on FirebaseAuthException catch (e) {
@@ -123,7 +120,6 @@ class AuthServices {
   Future<void> resetPassword(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email.trim());
-
       Fluttertoast.showToast(
         msg: "Password reset email sent!",
         backgroundColor: Colors.green,
@@ -135,6 +131,62 @@ class AuthServices {
         backgroundColor: Colors.redAccent,
         textColor: Colors.white,
       );
+    }
+  }
+
+  /// Deletes the user's Firestore docs then their Firebase Auth account.
+  /// Firebase requires a recent login to delete — if the credential is stale,
+  /// this throws a [FirebaseAuthException] with code 'requires-recent-login'.
+  /// Call [reauthenticate] first if that happens.
+  Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    final uid = user.uid;
+
+    // 1. Delete provider doc if it exists
+    final providerDoc =
+        await _firestore.collection('providers').doc(uid).get();
+    if (providerDoc.exists) {
+      await _firestore.collection('providers').doc(uid).delete();
+    }
+
+    // 2. Delete all bookings where user is customer
+    final customerBookings = await _firestore
+        .collection('bookings')
+        .where('customerId', isEqualTo: uid)
+        .get();
+    for (final doc in customerBookings.docs) {
+      await doc.reference.delete();
+    }
+
+    // 3. Delete user doc
+    await _firestore.collection('users').doc(uid).delete();
+
+    // 4. Delete Firebase Auth account
+    await user.delete();
+  }
+
+  /// Re-authenticate with email + password (required before deleteAccount
+  /// if the session is older than a few minutes).
+  Future<bool> reauthenticate({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final credential = EmailAuthProvider.credential(
+        email: email.trim(),
+        password: password.trim(),
+      );
+      await _auth.currentUser!.reauthenticateWithCredential(credential);
+      return true;
+    } on FirebaseAuthException catch (e) {
+      Fluttertoast.showToast(
+        msg: e.message ?? "Re-authentication failed.",
+        backgroundColor: Colors.redAccent,
+        textColor: Colors.white,
+      );
+      return false;
     }
   }
 
@@ -171,4 +223,3 @@ class AuthServices {
     }
   }
 }
-      
