@@ -1,9 +1,10 @@
 // ignore_for_file: deprecated_member_use
 
+import 'package:connectify/services/app_preferences.dart';
+import 'package:connectify/view/auth/login_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-import 'package:connectify/view/auth/signup_view.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -62,30 +63,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
+  /// Mark onboarding as seen then navigate to Login.
+  Future<void> _finish() async {
+    await AppPreferences.setOnboardingSeen();
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const LoginView(),
+        transitionsBuilder: (_, anim, __, child) =>
+            FadeTransition(opacity: anim, child: child),
+        transitionDuration: const Duration(milliseconds: 400),
+      ),
+    );
+  }
+
   void _next() {
     if (_isLastPage) {
-      Navigator.pushReplacement(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const SignupView(),
-          transitionsBuilder: (_, anim, __, child) =>
-              FadeTransition(opacity: anim, child: child),
-          transitionDuration: const Duration(milliseconds: 400),
-        ),
-      );
+      _finish();
     } else {
       _controller.nextPage(
         duration: const Duration(milliseconds: 450),
         curve: Curves.easeInOut,
       );
     }
-  }
-
-  void _skip() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const SignupView()),
-    );
   }
 
   @override
@@ -97,6 +98,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            // ── SKIP BUTTON 
             Padding(
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -106,7 +108,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   opacity: _isLastPage ? 0 : 1,
                   duration: const Duration(milliseconds: 200),
                   child: TextButton(
-                    onPressed: _isLastPage ? null : _skip,
+                    onPressed: _isLastPage ? null : _finish,
                     child: const Text(
                       'Skip',
                       style: TextStyle(
@@ -120,6 +122,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
+            // ── PAGE VIEW 
             Expanded(
               child: PageView.builder(
                 controller: _controller,
@@ -129,12 +132,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            //  BOTTOM SECTION 
+            // ── BOTTOM SECTION 
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 36),
               child: Column(
                 children: [
-                  // Page indicator
                   AnimatedSmoothIndicator(
                     activeIndex: _currentPage,
                     count: _pages.length,
@@ -150,65 +152,56 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
                   const SizedBox(height: 28),
 
-                  // Next / Get Started button
                   SizedBox(
                     width: double.infinity,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      child: ElevatedButton(
-                        onPressed: _next,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          foregroundColor: Colors.white,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
+                    child: ElevatedButton(
+                      onPressed: _next,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        padding:
+                            const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _isLastPage ? 'Get Started' : 'Next',
+                            style: const TextStyle(
+                              fontFamily: 'Urbanist',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
-                          elevation: 0,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              _isLastPage ? 'Get Started' : 'Next',
-                              style: const TextStyle(
-                                fontFamily: 'Urbanist',
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Icon(
-                              _isLastPage
-                                  ? Icons.arrow_forward_rounded
-                                  : Icons.chevron_right_rounded,
-                              size: 20,
-                            ),
-                          ],
-                        ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            _isLastPage
+                                ? Icons.arrow_forward_rounded
+                                : Icons.chevron_right_rounded,
+                            size: 20,
+                          ),
+                        ],
                       ),
                     ),
                   ),
 
                   const SizedBox(height: 14),
 
-                  // Already have an account
                   if (_isLastPage)
                     GestureDetector(
-                      onTap: () => Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const SignupView(),
-                        ),
-                      ),
+                      onTap: _finish,
                       child: RichText(
                         text: const TextSpan(
                           text: 'Already have an account? ',
                           style: TextStyle(
-                              color: Colors.grey,
-                              fontFamily: 'Urbanist',
-                              fontSize: 13),
+                            color: Colors.grey,
+                            fontFamily: 'Urbanist',
+                            fontSize: 13,
+                          ),
                           children: [
                             TextSpan(
                               text: 'Log in',
@@ -231,6 +224,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
+// ── PAGE CONTENT 
 class _PageContent extends StatelessWidget {
   final _OnboardPage page;
   const _PageContent({required this.page});
@@ -259,11 +253,7 @@ class _PageContent extends StatelessWidget {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.asset(
-                    page.image,
-                    fit: BoxFit.cover,
-                  ),
-                  // Gradient overlay at bottom
+                  Image.asset(page.image, fit: BoxFit.cover),
                   Positioned(
                     bottom: 0,
                     left: 0,
@@ -282,7 +272,6 @@ class _PageContent extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // Emoji badge
                   Positioned(
                     top: 16,
                     right: 16,
@@ -316,7 +305,6 @@ class _PageContent extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Accent line
                 Container(
                   width: 40,
                   height: 4,
@@ -325,9 +313,7 @@ class _PageContent extends StatelessWidget {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-
                 const SizedBox(height: 14),
-
                 Text(
                   page.title,
                   style: const TextStyle(
@@ -338,9 +324,7 @@ class _PageContent extends StatelessWidget {
                     height: 1.2,
                   ),
                 ),
-
                 const SizedBox(height: 12),
-
                 Text(
                   page.description,
                   style: TextStyle(
@@ -359,7 +343,7 @@ class _PageContent extends StatelessWidget {
   }
 }
 
-//  DATA CLASS
+// ── DATA CLASS 
 class _OnboardPage {
   final String image;
   final String emoji;

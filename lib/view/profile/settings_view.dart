@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectify/services/app_preferences.dart';
 import 'package:connectify/services/auth_services.dart';
 import 'package:connectify/view/auth/login_view.dart';
 import 'package:flutter/material.dart';
@@ -29,7 +30,6 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   Future<void> _load() async {
-    // Load preferences from Firestore
     final doc = await FirebaseFirestore.instance
         .collection('users')
         .doc(widget.uid)
@@ -40,7 +40,6 @@ class _SettingsViewState extends State<SettingsView> {
       _darkMode = data['darkMode'] ?? false;
     }
 
-    // Load app version
     try {
       final info = await PackageInfo.fromPlatform();
       _appVersion = 'v${info.version} (${info.buildNumber})';
@@ -58,7 +57,7 @@ class _SettingsViewState extends State<SettingsView> {
         .update({key: value});
   }
 
-  // LOGOUT
+  // ── LOGOUT 
   Future<void> _logout() async {
     final confirmed = await _confirm(
       title: 'Log Out',
@@ -68,7 +67,9 @@ class _SettingsViewState extends State<SettingsView> {
     );
     if (!confirmed) return;
 
+    await AppPreferences.clearUserData(); // clears local prefs, keeps onboarding flag
     await AuthServices().logout();
+
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
@@ -77,7 +78,7 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
-  // ── CHANGE PASSWORD
+  // ── CHANGE PASSWORD 
   Future<void> _showChangePasswordDialog() async {
     showDialog(
       context: context,
@@ -136,7 +137,7 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
-  // ── DELETE ACCOUNT
+  // ── DELETE ACCOUNT 
   Future<void> _showDeleteAccountDialog() async {
     final passwordController = TextEditingController();
     bool isDeleting = false;
@@ -206,9 +207,8 @@ class _SettingsViewState extends State<SettingsView> {
 
                       setDialogState(() => isDeleting = true);
 
-                      final reauthed = await AuthServices()
-                          .reauthenticate(
-                              email: widget.email, password: password);
+                      final reauthed = await AuthServices().reauthenticate(
+                          email: widget.email, password: password);
 
                       if (!reauthed) {
                         setDialogState(() => isDeleting = false);
@@ -216,6 +216,7 @@ class _SettingsViewState extends State<SettingsView> {
                       }
 
                       try {
+                        await AppPreferences.clearAll(); // wipe everything including onboarding
                         await AuthServices().deleteAccount();
                       } catch (e) {
                         setDialogState(() => isDeleting = false);
@@ -291,7 +292,7 @@ class _SettingsViewState extends State<SettingsView> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── HEADER
+            // ── HEADER 
             Container(
               color: Colors.white,
               padding:
@@ -369,7 +370,7 @@ class _SettingsViewState extends State<SettingsView> {
 
                         const SizedBox(height: 16),
 
-                        // ── ACCOUNT
+                        // ── ACCOUNT 
                         _Section(
                           title: 'Account',
                           children: [
@@ -391,7 +392,7 @@ class _SettingsViewState extends State<SettingsView> {
 
                         const SizedBox(height: 16),
 
-                        // ── ABOUT
+                        // ── ABOUT 
                         _Section(
                           title: 'About',
                           children: [
@@ -406,29 +407,33 @@ class _SettingsViewState extends State<SettingsView> {
                               iconColor: Colors.green,
                               title: 'Privacy Policy',
                               subtitle: 'How we use your data',
-                              onTap: () => ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
-                                content: Text('Coming soon'),
-                                behavior: SnackBarBehavior.floating,
-                              )),
+                              onTap: () =>
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Coming soon'),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              ),
                             ),
                             _SettingsTile(
                               icon: Icons.description_outlined,
                               iconColor: Colors.blueGrey,
                               title: 'Terms of Service',
                               subtitle: 'Our terms and conditions',
-                              onTap: () => ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
-                                content: Text('Coming soon'),
-                                behavior: SnackBarBehavior.floating,
-                              )),
+                              onTap: () =>
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Coming soon'),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              ),
                             ),
                           ],
                         ),
 
                         const SizedBox(height: 16),
 
-                        // ── DANGER ZONE
+                        // ── DANGER ZONE 
                         _Section(
                           title: 'Danger Zone',
                           titleColor: Colors.red.shade700,
@@ -526,6 +531,7 @@ class _Section extends StatelessWidget {
   }
 }
 
+// ── SETTINGS TILE 
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final Color iconColor;

@@ -1,7 +1,11 @@
 // ignore_for_file: deprecated_member_use
 
 import 'dart:async';
+import 'package:connectify/services/app_preferences.dart';
+import 'package:connectify/view/auth/login_view.dart';
 import 'package:connectify/view/screens/onboarding_screen.dart';
+import 'package:connectify/widgets/bottom_navigation_bar.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -23,7 +27,6 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // Force light status bar so icons are visible on cream bg
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -60,18 +63,60 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller.forward();
 
-    Timer(const Duration(seconds: 3), () {
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const OnboardingScreen(),
-          transitionsBuilder: (_, anim, __, child) =>
-              FadeTransition(opacity: anim, child: child),
-          transitionDuration: const Duration(milliseconds: 600),
-        ),
-      );
-    });
+    // Run animation + auth/prefs check in parallel
+    _determineStartScreen();
+  }
+
+  Future<void> _determineStartScreen() async {
+    // Wait for both the minimum splash duration AND the checks together
+    final results = await Future.wait([
+      Future.delayed(const Duration(seconds: 3)),
+      _getStartScreen(),
+    ]);
+
+    if (!mounted) return;
+
+    final destination = results[1] as Widget;
+
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => destination,
+        transitionsBuilder: (_, anim, __, child) =>
+            FadeTransition(opacity: anim, child: child),
+        transitionDuration: const Duration(milliseconds: 600),
+      ),
+    );
+  }
+
+  /// Decides which screen to go to:
+  /// 1. Never seen onboarding → OnboardingScreen
+  /// 2. Seen onboarding, not logged in → LoginView
+  /// 3. Seen onboarding, logged in → BottomNavBar (Home)
+  Future<Widget> _getStartScreen() async {
+    // Check onboarding first (fast local read)
+    final seenOnboarding = await AppPreferences.hasSeenOnboarding();
+    if (!seenOnboarding) {
+      return const OnboardingScreen();
+    }
+
+    // Check Firebase Auth state
+    final user = FirebaseAuth.instance.currentUser;
+
+    // Reload to ensure token is still valid
+    if (user != null) {
+      try {
+        await user.reload();
+        final refreshed = FirebaseAuth.instance.currentUser;
+        if (refreshed != null) {
+          return const BottomNavigation(uid: '',);
+        }
+      } catch (_) {
+        // Token expired or account deleted — fall through to login
+      }
+    }
+
+    return const LoginView();
   }
 
   @override
@@ -87,7 +132,7 @@ class _SplashScreenState extends State<SplashScreen>
       body: SafeArea(
         child: Column(
           children: [
-
+            // ── TOP ACCENT LINE 
             Container(
               height: 6,
               decoration: const BoxDecoration(
@@ -96,6 +141,8 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
             ),
+
+            // ── LOGO + NAME 
             Expanded(
               child: Center(
                 child: FadeTransition(
@@ -120,8 +167,7 @@ class _SplashScreenState extends State<SplashScreen>
                                   offset: const Offset(0, 12),
                                 ),
                                 BoxShadow(
-                                  color:
-                                      Colors.deepPurple.withOpacity(0.2),
+                                  color: Colors.deepPurple.withOpacity(0.2),
                                   blurRadius: 40,
                                   offset: const Offset(0, 16),
                                 ),
@@ -174,14 +220,14 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
 
+            // ── LOADING DOTS + FOOTER 
             FadeTransition(
               opacity: _fadeAnim,
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 48),
                 child: Column(
                   children: [
-                    // Subtle loading dots
-                    _LoadingDots(),
+                    const _LoadingDots(),
                     const SizedBox(height: 20),
                     const Text(
                       'Home services, simplified',
@@ -203,8 +249,10 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
-//  ANIMATED LOADING DOTS 
+// ── ANIMATED LOADING DOTS 
 class _LoadingDots extends StatefulWidget {
+  const _LoadingDots();
+
   @override
   State<_LoadingDots> createState() => _LoadingDotsState();
 }
@@ -237,17 +285,17 @@ class _LoadingDotsState extends State<_LoadingDots>
           mainAxisSize: MainAxisSize.min,
           children: List.generate(3, (i) {
             final delay = i / 3;
-            final value = ((_dotController.value - delay) % 1.0)
-                .clamp(0.0, 1.0);
-            final opacity = value < 0.5
-                ? value * 2
-                : (1.0 - value) * 2;
+            final value =
+                ((_dotController.value - delay) % 1.0).clamp(0.0, 1.0);
+            final opacity =
+                value < 0.5 ? value * 2 : (1.0 - value) * 2;
             return Container(
               margin: const EdgeInsets.symmetric(horizontal: 4),
               width: 7,
               height: 7,
               decoration: BoxDecoration(
-                color: Colors.deepPurple.withOpacity(0.3 + opacity * 0.7),
+                color: Colors.deepPurple
+                    .withOpacity(0.3 + opacity * 0.7),
                 shape: BoxShape.circle,
               ),
             );
