@@ -113,7 +113,7 @@ class BookingsView extends StatelessWidget {
   }
 }
 
-// ── PROVIDER BOOKINGS LIST ───────────────────────────────────────────────────
+// ── PROVIDER BOOKINGS LIST 
 class _ProviderBookingsList extends StatelessWidget {
   final String uid;
   final bool historyMode;
@@ -198,7 +198,7 @@ class _ProviderBookingsList extends StatelessWidget {
   }
 }
 
-// ── CUSTOMER BOOKINGS LIST ───────────────────────────────────────────────────
+// ── CUSTOMER BOOKINGS LIST 
 class _CustomerBookingsList extends StatelessWidget {
   final String uid;
   final bool historyMode;
@@ -302,7 +302,7 @@ class _CustomerBookingsList extends StatelessWidget {
   }
 }
 
-// ── BOOKING CARD ─────────────────────────────────────────────────────────────
+// ── BOOKING CARD 
 class _BookingCard extends StatelessWidget {
   final String bookingId;
   final Map<String, dynamic> data;
@@ -480,7 +480,7 @@ class _BookingCard extends StatelessWidget {
   }
 }
 
-// ── ACTION BUTTONS ────────────────────────────────────────────────────────────
+// ── ACTION BUTTONS 
 class _ActionButtons extends StatelessWidget {
   final String bookingId;
   final String status;

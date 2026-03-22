@@ -213,8 +213,8 @@ class _TopRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Welcome',
-                        style:
-                            TextStyle(fontSize: 11, color: Colors.grey)),
+                        style: TextStyle(
+                            fontSize: 11, color: Colors.grey)),
                     Text(
                       username,
                       style: const TextStyle(
@@ -367,8 +367,7 @@ class _SearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(30),
@@ -388,7 +387,7 @@ class _SearchBar extends StatelessWidget {
             child: TextField(
               onChanged: onChanged,
               decoration: const InputDecoration(
-                hintText: 'Search for services (e.g plumber)',
+                hintText: 'Search by name, skill or job type...',
                 border: InputBorder.none,
               ),
             ),
@@ -468,21 +467,28 @@ class _ProviderList extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
+        final q = searchQuery.toLowerCase().trim();
+
         final filtered = snapshot.data!.docs.where((doc) {
           final data = doc.data() as Map<String, dynamic>;
-          final skills =
-              List<String>.from(data['skills'] ?? []);
+          final skills = List<String>.from(data['skills'] ?? []);
+          final username =
+              (data['username'] ?? '').toString().toLowerCase();
+          final bio = (data['bio'] ?? '').toString().toLowerCase();
 
+          // Category chip filter
           final matchesCategory = activeIndex == 0
               ? true
               : skills.any((s) =>
                   s.toLowerCase() ==
                   categories[activeIndex].toLowerCase());
 
-          final matchesSearch = searchQuery.isEmpty
+          // Search filter — matches skills, name, or bio
+          final matchesSearch = q.isEmpty
               ? true
-              : skills.any(
-                  (s) => s.toLowerCase().contains(searchQuery));
+              : skills.any((s) => s.toLowerCase().contains(q)) ||
+                  username.contains(q) ||
+                  bio.contains(q);
 
           return matchesCategory && matchesSearch;
         }).toList();
@@ -496,8 +502,8 @@ class _ProviderList extends StatelessWidget {
                     size: 48, color: Colors.grey.shade300),
                 const SizedBox(height: 12),
                 Text(
-                  searchQuery.isNotEmpty
-                      ? 'No results for "$searchQuery"'
+                  q.isNotEmpty
+                      ? 'No results for "$q"'
                       : 'No providers available',
                   style: const TextStyle(color: Colors.grey),
                 ),
@@ -517,9 +523,8 @@ class _ProviderList extends StatelessWidget {
             return ProviderCard(
               providerId: providerId,
               data: data,
-              skills: (data['skills'] as List<dynamic>?)
-                      ?.join(', ') ??
-                  '',
+              skills:
+                  (data['skills'] as List<dynamic>?)?.join(', ') ?? '',
               online: data['online'] ?? false,
               ratingAvg: (data['ratingAvg'] ?? 0).toDouble(),
               ratingCount: data['ratingCount'] ?? 0,

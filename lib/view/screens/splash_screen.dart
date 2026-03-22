@@ -87,7 +87,7 @@ class _SplashScreenState extends State<SplashScreen>
       body: SafeArea(
         child: Column(
           children: [
-            // ── TOP DECORATION ──────────────────────────────────────
+
             Container(
               height: 6,
               decoration: const BoxDecoration(
@@ -96,7 +96,6 @@ class _SplashScreenState extends State<SplashScreen>
                 ),
               ),
             ),
-
             Expanded(
               child: Center(
                 child: FadeTransition(
@@ -108,7 +107,6 @@ class _SplashScreenState extends State<SplashScreen>
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // ── LOGO CONTAINER ────────────────────────
                           Container(
                             width: 110,
                             height: 110,
@@ -138,7 +136,6 @@ class _SplashScreenState extends State<SplashScreen>
 
                           const SizedBox(height: 28),
 
-                          // ── APP NAME ──────────────────────────────
                           const Text(
                             'Connectify',
                             style: TextStyle(
@@ -151,7 +148,6 @@ class _SplashScreenState extends State<SplashScreen>
 
                           const SizedBox(height: 10),
 
-                          // ── TAGLINE ───────────────────────────────
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 6),
@@ -178,7 +174,6 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
 
-            // ── BOTTOM SECTION ──────────────────────────────────────
             FadeTransition(
               opacity: _fadeAnim,
               child: Padding(
@@ -208,7 +203,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
-// ── ANIMATED LOADING DOTS ─────────────────────────────────────────────────────
+//  ANIMATED LOADING DOTS 
 class _LoadingDots extends StatefulWidget {
   @override
   State<_LoadingDots> createState() => _LoadingDotsState();

@@ -113,7 +113,7 @@ class BookingHistoryTab extends StatelessWidget {
   }
 }
 
-// ── STATUS CHIP ───────────────────────────────────────────────────────────────
+// ── STATUS CHIP 
 class _StatusChip extends StatelessWidget {
   final String status;
   const _StatusChip({required this.status});

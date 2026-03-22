@@ -136,7 +136,7 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
-  // ── DELETE ACCOUNT ────────────────────────────────────────────────────────
+  // ── DELETE ACCOUNT
   Future<void> _showDeleteAccountDialog() async {
     final passwordController = TextEditingController();
     bool isDeleting = false;
@@ -252,7 +252,7 @@ class _SettingsViewState extends State<SettingsView> {
     );
   }
 
-  // ── CONFIRM DIALOG ────────────────────────────────────────────────────────
+  // ── CONFIRM DIALOG 
   Future<bool> _confirm({
     required String title,
     required String message,
@@ -291,7 +291,7 @@ class _SettingsViewState extends State<SettingsView> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── HEADER ──────────────────────────────────────────────
+            // ── HEADER
             Container(
               color: Colors.white,
               padding:
@@ -315,14 +315,14 @@ class _SettingsViewState extends State<SettingsView> {
               ),
             ),
 
-            // ── CONTENT ─────────────────────────────────────────────
+            // ── CONTENT 
             Expanded(
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : ListView(
                       padding: const EdgeInsets.all(16),
                       children: [
-                        // ── PREFERENCES ──────────────────────────
+                        // ── PREFERENCES 
                         _Section(
                           title: 'Preferences',
                           children: [
@@ -369,7 +369,7 @@ class _SettingsViewState extends State<SettingsView> {
 
                         const SizedBox(height: 16),
 
-                        // ── ACCOUNT ───────────────────────────────
+                        // ── ACCOUNT
                         _Section(
                           title: 'Account',
                           children: [
@@ -391,7 +391,7 @@ class _SettingsViewState extends State<SettingsView> {
 
                         const SizedBox(height: 16),
 
-                        // ── ABOUT ─────────────────────────────────
+                        // ── ABOUT
                         _Section(
                           title: 'About',
                           children: [
@@ -428,7 +428,7 @@ class _SettingsViewState extends State<SettingsView> {
 
                         const SizedBox(height: 16),
 
-                        // ── DANGER ZONE ───────────────────────────
+                        // ── DANGER ZONE
                         _Section(
                           title: 'Danger Zone',
                           titleColor: Colors.red.shade700,
@@ -464,7 +464,7 @@ class _SettingsViewState extends State<SettingsView> {
   }
 }
 
-// ── SECTION WIDGET ────────────────────────────────────────────────────────────
+// ── SECTION WIDGET 
 class _Section extends StatelessWidget {
   final String title;
   final List<Widget> children;
@@ -526,7 +526,6 @@ class _Section extends StatelessWidget {
   }
 }
 
-// ── SETTINGS TILE ─────────────────────────────────────────────────────────────
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final Color iconColor;

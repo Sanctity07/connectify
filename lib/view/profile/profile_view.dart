@@ -53,7 +53,7 @@ class _ProfileViewState extends State<ProfileView>
           .doc(uid)
           .snapshots();
 
-  // ── PHOTO UPLOAD ──────────────────────────────────────────────────────────
+  // ── PHOTO UPLOAD 
   Future<void> _pickAndUploadPhoto() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(
@@ -80,7 +80,7 @@ class _ProfileViewState extends State<ProfileView>
     setState(() => isUploadingPhoto = false);
   }
 
-  // ── EDIT DISPLAY NAME ─────────────────────────────────────────────────────
+  // ── EDIT DISPLAY NAME 
   Future<void> _editDisplayName(String currentName) async {
     usernameController.text = currentName;
     await showDialog(
@@ -124,7 +124,7 @@ class _ProfileViewState extends State<ProfileView>
     );
   }
 
-  // ── BECOME PROVIDER FORM ──────────────────────────────────────────────────
+  // ── BECOME PROVIDER FORM 
   Future<void> _submitProviderForm() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => isLoading = true);
@@ -189,7 +189,7 @@ class _ProfileViewState extends State<ProfileView>
               body: SafeArea(
                 child: Column(
                   children: [
-                    // ── HEADER ────────────────────────────────────
+                    // ── HEADER 
                     Padding(
                       padding:
                           const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -238,7 +238,7 @@ class _ProfileViewState extends State<ProfileView>
                       ),
                     ),
 
-                    // ── AVATAR ────────────────────────────────────
+                    // ── AVATAR 
                     const SizedBox(height: 20),
                     Stack(
                       alignment: Alignment.bottomRight,
@@ -272,7 +272,7 @@ class _ProfileViewState extends State<ProfileView>
 
                     const SizedBox(height: 10),
 
-                    // ── NAME + EMAIL ──────────────────────────────
+                    // ── NAME + EMAIL 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -296,7 +296,7 @@ class _ProfileViewState extends State<ProfileView>
                           color: Colors.grey, fontSize: 13),
                     ),
 
-                    // ── ROLE BADGE ────────────────────────────────
+                    // ── ROLE BADGE 
                     const SizedBox(height: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -321,7 +321,7 @@ class _ProfileViewState extends State<ProfileView>
 
                     const SizedBox(height: 16),
 
-                    // ── TABS ──────────────────────────────────────
+                    // ── TABS 
                     TabBar(
                       controller: _tabController,
                       labelColor: Colors.deepPurple,
@@ -476,7 +476,7 @@ class _BecomeProviderTab extends StatelessWidget {
   }
 }
 
-// ── FORM FIELD HELPER ─────────────────────────────────────────────────────────
+// ── FORM FIELD HELPER 
 class _Field extends StatelessWidget {
   final TextEditingController controller;
   final String hint;

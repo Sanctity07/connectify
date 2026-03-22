@@ -184,7 +184,7 @@ class _EditProviderProfileViewState extends State<EditProviderProfileView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── PROFILE PHOTO ─────────────────────────────────
+                    // ── PROFILE PHOTO 
                     Center(
                       child: Stack(
                         alignment: Alignment.bottomRight,
@@ -226,7 +226,7 @@ class _EditProviderProfileViewState extends State<EditProviderProfileView> {
 
                     const SizedBox(height: 24),
 
-                    // ── AVAILABILITY ──────────────────────────────────
+                    // ── AVAILABILITY 
                     _card(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
@@ -259,7 +259,7 @@ class _EditProviderProfileViewState extends State<EditProviderProfileView> {
 
                     const SizedBox(height: 16),
 
-                    // ── BASIC INFO ────────────────────────────────────
+                    // ── BASIC INFO 
                     const _SectionLabel("Basic Info"),
                     const SizedBox(height: 10),
                     _card(
@@ -312,7 +312,7 @@ class _EditProviderProfileViewState extends State<EditProviderProfileView> {
 
                     const SizedBox(height: 16),
 
-                    // ── SKILLS ────────────────────────────────────────
+                    // ── SKILLS 
                     const _SectionLabel("Skills & Services"),
                     const SizedBox(height: 10),
                     _card(
@@ -326,7 +326,7 @@ class _EditProviderProfileViewState extends State<EditProviderProfileView> {
 
                     const SizedBox(height: 16),
 
-                    // ── BIO ───────────────────────────────────────────
+                    // ── BIO 
                     const _SectionLabel("About You"),
                     const SizedBox(height: 10),
                     _card(
@@ -340,7 +340,7 @@ class _EditProviderProfileViewState extends State<EditProviderProfileView> {
 
                     const SizedBox(height: 16),
 
-                    // ── PORTFOLIO ─────────────────────────────────────
+                    // ── PORTFOLIO 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [

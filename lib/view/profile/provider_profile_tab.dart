@@ -26,7 +26,7 @@ class ProviderProfileTab extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // ── STATS ROW ──────────────────────────────────────────────
+          // ── STATS ROW 
           Row(
             children: [
               _StatCard(
@@ -53,7 +53,7 @@ class ProviderProfileTab extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // ── INFO CARD ──────────────────────────────────────────────
+          // ── INFO CARD 
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -109,7 +109,7 @@ class ProviderProfileTab extends StatelessWidget {
   }
 }
 
-// ── STAT CARD ─────────────────────────────────────────────────────────────────
+// ── STAT CARD 
 class _StatCard extends StatelessWidget {
   final String label;
   final String value;
@@ -148,7 +148,7 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-// ── INFO ROW ──────────────────────────────────────────────────────────────────
+// ── INFO ROW 
 class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String label;

@@ -24,7 +24,7 @@ void showActiveBookingsSheet(BuildContext context) {
         ),
         child: Column(
           children: [
-            // ── HANDLE + TITLE ──────────────────────────────────
+            // ── HANDLE + TITLE 
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
               child: Column(
@@ -69,7 +69,7 @@ void showActiveBookingsSheet(BuildContext context) {
             const SizedBox(height: 12),
             const Divider(height: 1),
 
-            // ── BOOKINGS LIST ───────────────────────────────────
+            // ── BOOKINGS LIST 
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance

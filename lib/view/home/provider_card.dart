@@ -65,7 +65,7 @@ class ProviderCard extends StatelessWidget {
             ),
             child: Row(
               children: [
-                // ── AVATAR + ONLINE DOT ───────────────────────────
+                // ── AVATAR + ONLINE DOT 
                 Stack(
                   children: [
                     CircleAvatar(
@@ -94,7 +94,7 @@ class ProviderCard extends StatelessWidget {
 
                 const SizedBox(width: 12),
 
-                // ── INFO ──────────────────────────────────────────
+                // ── INFO 
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

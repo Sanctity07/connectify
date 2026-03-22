@@ -97,7 +97,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // ── SKIP BUTTON ─────────────────────────────────────────
             Padding(
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -121,7 +120,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            // ── PAGE VIEW ───────────────────────────────────────────
             Expanded(
               child: PageView.builder(
                 controller: _controller,
@@ -131,7 +129,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            // ── BOTTOM SECTION ──────────────────────────────────────
+            //  BOTTOM SECTION 
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 36),
               child: Column(
@@ -233,7 +231,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 }
 
-// ── PAGE CONTENT ──────────────────────────────────────────────────────────────
 class _PageContent extends StatelessWidget {
   final _OnboardPage page;
   const _PageContent({required this.page});
@@ -244,7 +241,6 @@ class _PageContent extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
-          // ── IMAGE CARD ──────────────────────────────────────────
           Expanded(
             flex: 5,
             child: Container(
@@ -315,7 +311,6 @@ class _PageContent extends StatelessWidget {
 
           const SizedBox(height: 28),
 
-          // ── TEXT SECTION ────────────────────────────────────────
           Expanded(
             flex: 3,
             child: Column(
@@ -364,7 +359,7 @@ class _PageContent extends StatelessWidget {
   }
 }
 
-// ── DATA CLASS ────────────────────────────────────────────────────────────────
+//  DATA CLASS
 class _OnboardPage {
   final String image;
   final String emoji;

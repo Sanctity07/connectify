@@ -31,7 +31,7 @@ void showLocationSheet(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── HANDLE ─────────────────────────────────────────
+            // ── HANDLE 
             Center(
               child: Container(
                 width: 40,
@@ -61,7 +61,7 @@ void showLocationSheet(
 
             const SizedBox(height: 20),
 
-            // ── TEXT FIELD ─────────────────────────────────────
+            // ── TEXT FIELD 
             TextField(
               controller: controller,
               autofocus: true,
@@ -82,7 +82,7 @@ void showLocationSheet(
 
             const SizedBox(height: 16),
 
-            // ── QUICK AREA CHIPS ───────────────────────────────
+            // ── QUICK AREA CHIPS 
             const Text(
               'Quick select:',
               style: TextStyle(fontSize: 12, color: Colors.grey),
@@ -126,7 +126,7 @@ void showLocationSheet(
 
             const SizedBox(height: 24),
 
-            // ── SAVE BUTTON ────────────────────────────────────
+            // ── SAVE BUTTON 
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
