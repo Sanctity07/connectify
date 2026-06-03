@@ -24,7 +24,7 @@ class _BottomNavigationState extends State<BottomNavigation> {
   late final Stream<QuerySnapshot> _bookingNotificationStream;
 
   @override
-  void initState() {
+  void initState() { 
     super.initState();
 
     _bookingNotificationStream = FirebaseFirestore.instance
