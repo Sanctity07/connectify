@@ -288,8 +288,9 @@ class _EditProviderProfileViewState extends State<EditProviderProfileView> {
                                       style: TextStyle(fontSize: 14))),
                               _StepperButton(
                                   onTap: () {
-                                    if (yearsOfExperience > 0)
-                                      setState(() => yearsOfExperience--);
+                                    if (yearsOfExperience > 0) {
+                                    setState(() => yearsOfExperience--);
+                                  }
                                   },
                                   icon: Icons.remove),
                               Padding(

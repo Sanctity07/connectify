@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 // import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectify/view/profile/earnings_view.dart';
 import 'package:connectify/view/profile/edit_provider_profile_view.dart';
 import 'package:flutter/material.dart';
 
@@ -21,6 +22,7 @@ class ProviderProfileTab extends StatelessWidget {
     final online = providerData!['online'] ?? false;
     final ratingAvg = (providerData!['ratingAvg'] ?? 0).toDouble();
     final ratingCount = providerData!['ratingCount'] ?? 0;
+    final balance = (providerData!['balance'] ?? 0).toDouble();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -82,23 +84,51 @@ class ProviderProfileTab extends StatelessWidget {
                   iconColor: online ? Colors.green : Colors.grey,
                 ),
                 const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const EditProviderProfileView()),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const EditProviderProfileView()),
+                        ),
+                        icon: const Icon(Icons.edit, size: 16),
+                        label: const Text('Edit Profile'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30)),
+                        ),
+                      ),
                     ),
-                    icon: const Icon(Icons.edit),
-                    label: const Text('Edit Profile'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const EarningsView()),
+                        ),
+                        icon: const Icon(
+                            Icons.account_balance_wallet_outlined,
+                            size: 16),
+                        label: Text(
+                          balance > 0
+                              ? '₦${balance.toStringAsFixed(0)}'
+                              : 'Earnings',
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.deepPurple,
+                          side: const BorderSide(color: Colors.deepPurple),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30)),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),

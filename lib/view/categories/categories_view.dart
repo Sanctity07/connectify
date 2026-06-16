@@ -1,3 +1,6 @@
+// ignore_for_file: deprecated_member_use
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'category_providers_view.dart';
 
@@ -11,24 +14,57 @@ class CategoriesView extends StatefulWidget {
 class _CategoriesViewState extends State<CategoriesView> {
   String searchQuery = '';
 
-  final List<Map<String, dynamic>> categories = [
-    {'name': 'Cleaner', 'icon': Icons.cleaning_services},
-    {'name': 'IT Solutions', 'icon': Icons.computer},
-    {'name': 'Plumber', 'icon': Icons.plumbing},
-    {'name': 'Electrician', 'icon': Icons.electrical_services},
-    {'name': 'Carpenter', 'icon': Icons.build},
-    {'name': 'Painter', 'icon': Icons.brush},
-    {'name': 'Gardening', 'icon': Icons.grass},
-    {'name': 'Tutoring', 'icon': Icons.school},
+  static const List<Map<String, dynamic>> _categories = [
+    {
+      'name': 'Cleaner',
+      'icon': Icons.cleaning_services,
+      'color': Color(0xFF4FC3F7),
+    },
+    {
+      'name': 'IT Solutions',
+      'icon': Icons.computer,
+      'color': Color(0xFF7986CB),
+    },
+    {
+      'name': 'Plumber',
+      'icon': Icons.plumbing,
+      'color': Color(0xFF4DB6AC),
+    },
+    {
+      'name': 'Electrician',
+      'icon': Icons.electrical_services,
+      'color': Color(0xFFFFB74D),
+    },
+    {
+      'name': 'Carpenter',
+      'icon': Icons.build,
+      'color': Color(0xFF8D6E63),
+    },
+    {
+      'name': 'Painter',
+      'icon': Icons.brush,
+      'color': Color(0xFFBA68C8),
+    },
+    {
+      'name': 'Gardening',
+      'icon': Icons.grass,
+      'color': Color(0xFF81C784),
+    },
+    {
+      'name': 'Tutoring',
+      'icon': Icons.school,
+      'color': Color(0xFFFF8A65),
+    },
   ];
 
   @override
   Widget build(BuildContext context) {
-    final filteredCategories = categories.where((category) {
-      return category['name']
-          .toLowerCase()
-          .contains(searchQuery.toLowerCase());
-    }).toList();
+    final filtered = _categories
+        .where((c) =>
+            (c['name'] as String)
+                .toLowerCase()
+                .contains(searchQuery.toLowerCase()))
+        .toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F5EF),
@@ -40,33 +76,28 @@ class _CategoriesViewState extends State<CategoriesView> {
             children: [
               const SizedBox(height: 12),
 
-              /// HEADER (Same feel as Home)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Categories',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w600,
-                      fontFamily: 'Urbanist',
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.more_vert),
-                    onPressed: () {},
-                  ),
-                ],
+              const Text(
+                'Categories',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Urbanist',
+                ),
+              ),
+
+              const SizedBox(height: 4),
+
+              const Text(
+                'Browse all service categories',
+                style: TextStyle(color: Colors.grey, fontSize: 13),
               ),
 
               const SizedBox(height: 20),
 
-              /// SEARCH BAR (Same as Home)
+              // Search bar
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
+                    horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(30),
@@ -84,14 +115,11 @@ class _CategoriesViewState extends State<CategoriesView> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: TextField(
-                        onChanged: (value) {
-                          setState(() {
-                            searchQuery = value;
-                          });
-                        },
+                        onChanged: (v) => setState(() => searchQuery = v),
                         decoration: const InputDecoration(
-                          hintText: 'Search categories',
+                          hintText: 'Search categories...',
                           border: InputBorder.none,
+                          isDense: true,
                         ),
                       ),
                     ),
@@ -101,75 +129,124 @@ class _CategoriesViewState extends State<CategoriesView> {
 
               const SizedBox(height: 24),
 
-              /// GRID
               Expanded(
-                child: filteredCategories.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No categories found',
-                          style: TextStyle(fontSize: 16),
+                child: filtered.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.search_off,
+                                size: 48, color: Colors.grey.shade300),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'No categories found',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ],
                         ),
                       )
                     : GridView.builder(
-                        itemCount: filteredCategories.length,
+                        itemCount: filtered.length,
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
+                          crossAxisSpacing: 14,
+                          mainAxisSpacing: 14,
+                          childAspectRatio: 1.05,
                         ),
                         itemBuilder: (context, index) {
-                          final category = filteredCategories[index];
-
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => CategoryProvidersView(
-                                    category: category['name'],
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color:
-                                        Colors.black.withOpacity(0.06),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 6),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    category['icon'] as IconData,
-                                    size: 44,
-                                    color: Colors.black,
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    category['name'] as String,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
+                          final cat = filtered[index];
+                          return _CategoryCard(category: cat);
                         },
                       ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryCard extends StatelessWidget {
+  final Map<String, dynamic> category;
+
+  const _CategoryCard({required this.category});
+
+  @override
+  Widget build(BuildContext context) {
+    final name = category['name'] as String;
+    final icon = category['icon'] as IconData;
+    final color = category['color'] as Color;
+
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CategoryProvidersView(category: name),
+        ),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 28, color: color),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              name,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 4),
+            // Live provider count — single-field query, no composite index needed
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('providers')
+                  .where('skills', arrayContains: name)
+                  .snapshots(),
+              builder: (context, snap) {
+                if (snap.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(height: 14);
+                }
+                if (snap.hasError || !snap.hasData) {
+                  return const SizedBox(height: 14);
+                }
+                // Filter verified client-side to avoid composite index
+                final count = snap.data!.docs.where((doc) {
+                  final d = doc.data() as Map<String, dynamic>;
+                  return (d['status'] ?? '') == 'verified';
+                }).length;
+                return Text(
+                  count == 0
+                      ? 'No providers'
+                      : '$count provider${count == 1 ? '' : 's'}',
+                  style: TextStyle(color: color, fontSize: 11),
+                );
+              },
+            ),
+          ],
         ),
       ),
     );

@@ -1,0 +1,101 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── HELPERS ──────────────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+
+    // ── USERS ─────────────────────────────────────────────────────────────────
+    // Any signed-in user can read any user profile (needed for booking cards).
+    // Only the owner can write their own profile.
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isOwner(userId);
+    }
+
+    // ── PROVIDERS ─────────────────────────────────────────────────────────────
+    // Any signed-in user can read provider profiles (home screen, categories).
+    // Only the provider themselves can write their own provider doc.
+    match /providers/{providerId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isOwner(providerId);
+    }
+
+    // ── BOOKINGS ──────────────────────────────────────────────────────────────
+    // The customer or the provider on a booking can read and update it.
+    // Only a signed-in user can create a booking (as the customer).
+    match /bookings/{bookingId} {
+      allow read: if isSignedIn() && (
+        resource.data.customerId == request.auth.uid ||
+        resource.data.providerId == request.auth.uid
+      );
+      allow create: if isSignedIn() &&
+        request.resource.data.customerId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        resource.data.customerId == request.auth.uid ||
+        resource.data.providerId == request.auth.uid
+      );
+      allow delete: if false;
+    }
+
+    // ── RATINGS ───────────────────────────────────────────────────────────────
+    // Anyone signed in can read ratings (shown on public profiles).
+    // Only the customer who made the booking can write a rating.
+    match /ratings/{ratingId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() &&
+        request.resource.data.customerId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // ── NOTIFICATIONS ─────────────────────────────────────────────────────────
+    // Each user can only read/update their own notifications.
+    // Writes are done server-side (or by the booking participants).
+    match /notifications/{notifId} {
+      allow read: if isSignedIn() &&
+        resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() &&
+        resource.data.userId == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // ── CHATS ─────────────────────────────────────────────────────────────────
+    // Only participants of the chat can read/write.
+    match /chats/{chatId} {
+      allow read, write: if isSignedIn() &&
+        request.auth.uid in resource.data.participants;
+
+      // Allow creating a chat if you are one of the participants
+      allow create: if isSignedIn() &&
+        request.auth.uid in request.resource.data.participants;
+
+      match /messages/{messageId} {
+        allow read: if isSignedIn() && (
+          get(/databases/$(database)/documents/chats/$(chatId))
+            .data.participants.hasAny([request.auth.uid])
+        );
+        allow create: if isSignedIn() &&
+          request.resource.data.senderId == request.auth.uid;
+        allow update, delete: if false;
+      }
+    }
+
+    // ── PAYOUTS ───────────────────────────────────────────────────────────────
+    match /payouts/{payoutId} {
+      allow read: if isSignedIn() &&
+        resource.data.providerId == request.auth.uid;
+      allow create: if isSignedIn() &&
+        request.resource.data.providerId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+  }
+}

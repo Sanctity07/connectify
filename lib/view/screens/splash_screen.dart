@@ -109,7 +109,7 @@ class _SplashScreenState extends State<SplashScreen>
         await user.reload();
         final refreshed = FirebaseAuth.instance.currentUser;
         if (refreshed != null) {
-          return const BottomNavigation(uid: '',);
+          return BottomNavigation(uid: refreshed.uid);
         }
       } catch (_) {
         // Token expired or account deleted — fall through to login

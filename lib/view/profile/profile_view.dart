@@ -110,12 +110,12 @@ class _ProfileViewState extends State<ProfileView>
             onPressed: () async {
               final name = usernameController.text.trim();
               if (name.isEmpty) return;
+              final nav = Navigator.of(context);
               await FirebaseFirestore.instance
                   .collection('users')
                   .doc(uid)
                   .update({'username': name});
-              if (!context.mounted) return;
-              Navigator.pop(context);
+              nav.pop();
             },
             child: const Text('Save'),
           ),
@@ -129,13 +129,16 @@ class _ProfileViewState extends State<ProfileView>
     if (!_formKey.currentState!.validate()) return;
     setState(() => isLoading = true);
 
+    // status = 'pending' — admin must approve via the admin website
+    // before the user becomes a verified provider.
+    // role stays 'customer' until approval.
     await FirebaseFirestore.instance.collection('providers').doc(uid).set({
       'userId': uid,
       'phoneNumber': phoneController.text.trim(),
       'skills':
           skillsController.text.split(',').map((e) => e.trim()).toList(),
-      'status': 'verified',
-      'online': true,
+      'status': 'pending',
+      'online': false,
       'ratingAvg': 0,
       'ratingCount': 0,
       'balance': 0,
@@ -144,15 +147,18 @@ class _ProfileViewState extends State<ProfileView>
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .update({'role': 'provider'});
+    // Do NOT update role to 'provider' here.
+    // The admin website sets status → 'verified' and role → 'provider'
+    // once they approve the request.
 
     setState(() => isLoading = false);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You are now a provider!')));
+      const SnackBar(
+        content: Text('Request submitted! You\'ll be notified once approved.'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
@@ -332,9 +338,15 @@ class _ProfileViewState extends State<ProfileView>
                               Tab(text: 'My Profile'),
                               Tab(text: 'Bookings'),
                             ]
-                          : const [
-                              Tab(text: 'Become a Provider'),
-                              Tab(text: 'My Bookings'),
+                          : [
+                              Tab(
+                                text: status == 'pending'
+                                    ? 'Application ⏳'
+                                    : status == 'rejected'
+                                        ? 'Resubmit'
+                                        : 'Become a Provider',
+                              ),
+                              const Tab(text: 'My Bookings'),
                             ],
                     ),
 
@@ -393,19 +405,111 @@ class _BecomeProviderTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ── PENDING ──────────────────────────────────────────────────────────────
     if (status == 'pending') {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text(
-            '⏳ Your provider request is under review.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16),
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.hourglass_top_rounded,
+                    size: 36, color: Colors.orange),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Request Under Review',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Urbanist',
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Your provider application has been submitted and is being reviewed by our team. We\'ll notify you once it\'s approved.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey, fontSize: 13, height: 1.6),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.info_outline, size: 14, color: Colors.orange),
+                    SizedBox(width: 6),
+                    Text(
+                      'Usually takes 24–48 hours',
+                      style: TextStyle(color: Colors.orange, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       );
     }
 
+    // ── REJECTED ─────────────────────────────────────────────────────────────
+    if (status == 'rejected') {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.cancel_outlined,
+                    size: 36, color: Colors.red),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Application Not Approved',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Urbanist',
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Your provider request was not approved at this time. You may update your details and resubmit.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey, fontSize: 13, height: 1.6),
+              ),
+              const SizedBox(height: 24),
+              _buildForm(context),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return _buildForm(context);
+  }
+
+  Widget _buildForm(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Container(
@@ -462,9 +566,8 @@ class _BecomeProviderTab extends StatelessWidget {
                         borderRadius: BorderRadius.circular(30)),
                   ),
                   child: isLoading
-                      ? const CircularProgressIndicator(
-                          color: Colors.white)
-                      : const Text('Submit',
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Submit Application',
                           style: TextStyle(fontSize: 16)),
                 ),
               ),

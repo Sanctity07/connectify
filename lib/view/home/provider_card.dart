@@ -14,6 +14,9 @@ class ProviderCard extends StatelessWidget {
   final int ratingCount;
   final String photoUrl;
   final String bio;
+  /// Override the sub-service key used when booking from this card.
+  /// Defaults to the first skill in [skills].
+  final String? overrideSubServiceKey;
 
   const ProviderCard({
     super.key,
@@ -25,6 +28,7 @@ class ProviderCard extends StatelessWidget {
     required this.ratingCount,
     required this.photoUrl,
     required this.bio,
+    this.overrideSubServiceKey,
   });
 
   @override
@@ -186,7 +190,7 @@ class ProviderCard extends StatelessWidget {
                               builder: (_) => BookingFormView(
                                 providerId: providerId,
                                 serviceId: 'service1',
-                                subServiceKey:
+                                subServiceKey: overrideSubServiceKey ??
                                     skills.split(',').first.trim(),
                               ),
                             ),

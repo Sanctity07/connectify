@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectify/view/home/active_bookings_sheet.dart';
 import 'package:connectify/view/home/location_sheet.dart';
 import 'package:connectify/view/home/provider_card.dart';
+import 'package:connectify/view/notifications/notifications_view.dart';
 import 'package:connectify/view/profile/profile_view.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -128,8 +129,11 @@ class _HomeViewState extends State<HomeView> {
 
                     // ── SEARCH ────────────────────────────────────
                     _SearchBar(
-                      onChanged: (v) => setState(
-                          () => _searchQuery = v.toLowerCase().trim()),
+                      onChanged: (v) => setState(() {
+                        _searchQuery = v.toLowerCase().trim();
+                        // Reset category chip to "All" when user types
+                        if (_searchQuery.isNotEmpty) _activeIndex = 0;
+                      }),
                     ),
 
                     const SizedBox(height: 16),
@@ -276,11 +280,100 @@ class _TopRow extends StatelessWidget {
 
             const SizedBox(width: 8),
 
+            // Notifications bell with live badge
+            _NotificationsBell(),
+
+            const SizedBox(width: 8),
+
             // Bag icon with live badge
             _BookingsBadge(onTap: onBookingsTap),
           ],
         ),
       ],
+    );
+  }
+}
+
+// ── NOTIFICATIONS BELL ───────────────────────────────────────────────────────
+class _NotificationsBell extends StatelessWidget {
+  const _NotificationsBell();
+
+  @override
+  Widget build(BuildContext context) {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: uid == null
+          ? null
+          : FirebaseFirestore.instance
+              .collection('notifications')
+              .where('userId', isEqualTo: uid)
+              .snapshots(),
+      builder: (context, snap) {
+        // Count unread client-side — avoids composite index on userId+read
+        final count = snap.hasData
+            ? snap.data!.docs.where((d) {
+                final data = d.data() as Map<String, dynamic>;
+                return (data['read'] as bool?) == false;
+              }).length
+            : 0;
+
+        return GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const NotificationsView()),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.07),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(
+                  count > 0
+                      ? Icons.notifications_rounded
+                      : Icons.notifications_outlined,
+                  size: 20,
+                  color: count > 0 ? Colors.deepPurple : Colors.grey,
+                ),
+                if (count > 0)
+                  Positioned(
+                    top: -6,
+                    right: -6,
+                    child: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          count > 9 ? '9+' : '$count',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -457,20 +550,42 @@ class _ProviderList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Single-field query only — avoids composite index requirement.
+    // status filtering done client-side.
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('providers')
-          .where('status', isEqualTo: 'verified')
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.wifi_off_rounded,
+                    size: 48, color: Colors.grey.shade300),
+                const SizedBox(height: 12),
+                const Text(
+                  'Could not load providers',
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ],
+            ),
+          );
         }
 
         final q = searchQuery.toLowerCase().trim();
 
-        final filtered = snapshot.data!.docs.where((doc) {
+        final filtered = (snapshot.data?.docs ?? []).where((doc) {
           final data = doc.data() as Map<String, dynamic>;
+
+          // Must be verified
+          if ((data['status'] ?? '') != 'verified') return false;
+
           final skills = List<String>.from(data['skills'] ?? []);
           final username =
               (data['username'] ?? '').toString().toLowerCase();
@@ -516,8 +631,7 @@ class _ProviderList extends StatelessWidget {
           itemCount: filtered.length,
           separatorBuilder: (_, __) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
-            final data =
-                filtered[index].data() as Map<String, dynamic>;
+            final data = filtered[index].data() as Map<String, dynamic>;
             final providerId = filtered[index].id;
 
             return ProviderCard(

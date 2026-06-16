@@ -16,10 +16,11 @@ class LoginView extends StatefulWidget {
 }
 
 class _LoginViewState extends State<LoginView> {
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-
+  final _formKey = GlobalKey<FormState>();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
   bool isLoading = false;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -29,13 +30,7 @@ class _LoginViewState extends State<LoginView> {
   }
 
   Future<void> _login() async {
-    if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-      Fluttertoast.showToast(
-        msg: "Email and password required",
-        backgroundColor: Colors.redAccent,
-      );
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() => isLoading = true);
 
@@ -48,7 +43,7 @@ class _LoginViewState extends State<LoginView> {
 
     if (user != null && mounted) {
       Fluttertoast.showToast(
-        msg: "Login successful!",
+        msg: "Welcome back!",
         backgroundColor: Colors.green,
       );
 
@@ -67,78 +62,140 @@ class _LoginViewState extends State<LoginView> {
   @override
   Widget build(BuildContext context) {
     return AppGlassScaffold(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            "Welcome Back",
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w600,
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Welcome Back",
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.w600),
             ),
-          ),
-          const SizedBox(height: 30),
+            const SizedBox(height: 8),
+            const Text(
+              "Sign in to your account",
+              style: TextStyle(color: Colors.grey, fontSize: 14),
+            ),
+            const SizedBox(height: 30),
 
-          _inputField(
-            controller: emailController,
-            hint: "Email",
-            icon: Icons.email,
-          ),
-          const SizedBox(height: 16),
-
-          _inputField(
-            controller: passwordController,
-            hint: "Password",
-            icon: Icons.lock,
-            obscure: true,
-          ),
-
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const ForgotPasswordView(),
-                  ),
-                );
+            _inputField(
+              controller: emailController,
+              hint: "Email",
+              icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
+              validator: (v) {
+                if (v == null || v.isEmpty) return "Email is required";
+                if (!v.contains('@')) return "Enter a valid email";
+                return null;
               },
-              child: const Text("Forgot password?"),
             ),
-          ),
+            const SizedBox(height: 16),
 
-          const SizedBox(height: 20),
+            _passwordField(),
 
-          ElevatedButton(
-            onPressed: isLoading ? null : _login,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 60,
-                vertical: 14,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ForgotPasswordView()),
+                ),
+                child: const Text(
+                  "Forgot password?",
+                  style: TextStyle(color: Colors.deepPurple),
+                ),
               ),
             ),
-            child: isLoading
-                ? const CircularProgressIndicator(color: Colors.white)
-                : const Text("Login"),
-          ),
 
-          const SizedBox(height: 20),
+            const SizedBox(height: 10),
 
-          TextButton(
-            onPressed: () {
-              Navigator.push(
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: isLoading ? null : _login,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Text("Login",
+                        style: TextStyle(fontSize: 16, color: Colors.white)),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            TextButton(
+              onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const SignupView()),
-              );
-            },
-            child: const Text("Don't have an account? Sign Up"),
+              ),
+              child: RichText(
+                text: const TextSpan(
+                  text: "Don't have an account? ",
+                  style: TextStyle(color: Colors.grey, fontSize: 14),
+                  children: [
+                    TextSpan(
+                      text: 'Sign Up',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _passwordField() {
+    return TextFormField(
+      controller: passwordController,
+      obscureText: _obscurePassword,
+      validator: (v) {
+        if (v == null || v.isEmpty) return "Password is required";
+        if (v.length < 6) return "Password must be at least 6 characters";
+        return null;
+      },
+      decoration: InputDecoration(
+        hintText: "Password",
+        prefixIcon: const Icon(Icons.lock_outline),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscurePassword
+                ? Icons.visibility_off_outlined
+                : Icons.visibility_outlined,
+            color: Colors.grey,
           ),
-        ],
+          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+        ),
+        filled: true,
+        fillColor: Colors.grey.shade100,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: BorderSide.none,
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: const BorderSide(color: Colors.red, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: const BorderSide(color: Colors.red, width: 1.5),
+        ),
       ),
     );
   }
@@ -147,11 +204,13 @@ class _LoginViewState extends State<LoginView> {
     required TextEditingController controller,
     required String hint,
     required IconData icon,
-    bool obscure = false,
+    TextInputType keyboardType = TextInputType.text,
+    String? Function(String?)? validator,
   }) {
-    return TextField(
+    return TextFormField(
       controller: controller,
-      obscureText: obscure,
+      keyboardType: keyboardType,
+      validator: validator,
       decoration: InputDecoration(
         hintText: hint,
         prefixIcon: Icon(icon),
@@ -160,6 +219,14 @@ class _LoginViewState extends State<LoginView> {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
           borderSide: BorderSide.none,
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: const BorderSide(color: Colors.red, width: 1),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: const BorderSide(color: Colors.red, width: 1.5),
         ),
       ),
     );

@@ -2,6 +2,7 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectify/services/auth_services.dart';
+import 'package:connectify/view/chat/chat_view.dart';
 import 'package:connectify/viewmodels/booking_viewmodel.dart';
 import 'package:connectify/widgets/rating_bottom_sheet.dart';
 import 'package:flutter/material.dart';
@@ -510,12 +511,23 @@ class _ActionButtons extends StatelessWidget {
         );
       }
       if (status == 'accepted') {
-        return _btn(
-            "Start Job", Colors.black, () => vm.startJob(bookingId));
+        return Row(
+          children: [
+            _btn("Start Job", Colors.black, () => vm.startJob(bookingId)),
+            const SizedBox(width: 8),
+            _chatBtn(context),
+          ],
+        );
       }
       if (status == 'started') {
-        return _btn("Mark Complete", Colors.deepPurple,
-            () => vm.completeJob(bookingId));
+        return Row(
+          children: [
+            _btn("Mark Complete", Colors.deepPurple,
+                () => vm.completeJob(bookingId)),
+            const SizedBox(width: 8),
+            _chatBtn(context),
+          ],
+        );
       }
     } else {
       // Customer actions
@@ -549,6 +561,19 @@ class _ActionButtons extends StatelessWidget {
             }
           },
           color: Colors.red,
+        );
+      }
+
+      if (status == 'accepted' || status == 'started') {
+        return Row(
+          children: [
+            _chatBtn(context),
+            if (status == 'pending') ...[
+              const SizedBox(width: 8),
+              _outlineBtn("Cancel", () => vm.cancelJob(bookingId),
+                  color: Colors.red),
+            ],
+          ],
         );
       }
 
@@ -598,6 +623,32 @@ class _ActionButtons extends StatelessWidget {
     }
 
     return const SizedBox();
+  }
+
+  Widget _chatBtn(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatView(
+            bookingId: bookingId,
+            otherUserId: isProvider
+                ? (isProvider ? '' : providerId)
+                : providerId,
+            otherUserName: isProvider ? 'Customer' : 'Provider',
+            otherUserPhoto: '',
+          ),
+        ),
+      ),
+      icon: const Icon(Icons.chat_bubble_outline, size: 14),
+      label: const Text('Chat', style: TextStyle(fontSize: 13)),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.deepPurple,
+        side: const BorderSide(color: Colors.deepPurple),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+    );
   }
 
   Widget _btn(String label, Color color, VoidCallback onTap) {

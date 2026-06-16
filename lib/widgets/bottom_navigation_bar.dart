@@ -1,6 +1,8 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectify/services/auth_services.dart';
+import 'package:connectify/view/notifications/notifications_view.dart';
 import 'package:flutter/material.dart';
 
 import '../view/home/home_view.dart';
@@ -9,7 +11,7 @@ import '../view/bookings/bookings_view.dart';
 import '../view/profile/profile_view.dart';
 
 class BottomNavigation extends StatefulWidget {
-  final String uid; 
+  final String uid;
 
   const BottomNavigation({super.key, required this.uid});
 
@@ -21,17 +23,53 @@ class _BottomNavigationState extends State<BottomNavigation> {
   int _selectedIndex = 0;
   final PageController _pageController = PageController();
 
-  late final Stream<QuerySnapshot> _bookingNotificationStream;
+  // Use the actual current user uid (in case uid was passed as '' from splash)
+  String get _uid =>
+      widget.uid.isNotEmpty
+          ? widget.uid
+          : AuthServices().currentUser?.uid ?? '';
 
-  @override
-  void initState() { 
-    super.initState();
+  /// Unread notification count stream for the current user
+  Stream<int> get _unreadNotifStream => _uid.isEmpty
+      ? Stream.value(0)
+      : FirebaseFirestore.instance
+          .collection('notifications')
+          .where('userId', isEqualTo: _uid)
+          .snapshots()
+          // Count unread client-side to avoid composite index
+          .map((snap) => snap.docs.where((d) {
+                final data = d.data();
+                return data['read'] == false;
+              }).length);
 
-    _bookingNotificationStream = FirebaseFirestore.instance
-        .collection('bookings')
-        .where('providerId', isEqualTo: widget.uid)
-        .where('status', isEqualTo: 'pending')
-        .snapshots();
+  /// Pending booking count — shows for providers AND customers
+  Stream<int> get _pendingBookingStream {
+    if (_uid.isEmpty) return Stream.value(0);
+    // Check if provider — if no provider doc, treat as customer
+    return FirebaseFirestore.instance
+        .collection('providers')
+        .doc(_uid)
+        .snapshots()
+        .asyncExpand((provSnap) {
+      final isProvider = provSnap.exists &&
+          (provSnap.data()?['status'] ?? '') == 'verified';
+
+      if (isProvider) {
+        return FirebaseFirestore.instance
+            .collection('bookings')
+            .where('providerId', isEqualTo: _uid)
+            .where('status', isEqualTo: 'pending')
+            .snapshots()
+            .map((s) => s.docs.length);
+      } else {
+        return FirebaseFirestore.instance
+            .collection('bookings')
+            .where('customerId', isEqualTo: _uid)
+            .where('status', whereIn: ['pending', 'accepted', 'started'])
+            .snapshots()
+            .map((s) => s.docs.length);
+      }
+    });
   }
 
   void _onItemTapped(int index) {
@@ -82,57 +120,125 @@ class _BottomNavigationState extends State<BottomNavigation> {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(4, (index) {
-            final isActive = _selectedIndex == index;
+          children: [
+            // Regular nav items
+            ...List.generate(4, (index) {
+              final isActive = _selectedIndex == index;
 
-            return GestureDetector(
-              onTap: () => _onItemTapped(index),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isActive
-                      ? Colors.deepPurple.withOpacity(0.15)
-                      : Colors.transparent,
-                  shape: BoxShape.circle,
+              return GestureDetector(
+                onTap: () => _onItemTapped(index),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isActive
+                        ? Colors.deepPurple.withOpacity(0.15)
+                        : Colors.transparent,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Icon(
+                        icons[index],
+                        size: 26,
+                        color: isActive ? Colors.deepPurple : Colors.grey,
+                      ),
+
+                      // Bookings badge (index 2)
+                      if (index == 2)
+                        StreamBuilder<int>(
+                          stream: _pendingBookingStream,
+                          builder: (context, snapshot) {
+                            final count = snapshot.data ?? 0;
+                            if (count == 0) return const SizedBox();
+                            return Positioned(
+                              top: -4,
+                              right: -4,
+                              child: Container(
+                                width: count > 9 ? 18 : 14,
+                                height: 14,
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    count > 9 ? '9+' : '$count',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                    ],
+                  ),
                 ),
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Icon(
-                      icons[index],
-                      size: 26,
-                      color: isActive ? Colors.deepPurple : Colors.grey,
+              );
+            }),
+
+            // Notification bell — separate from page nav
+            StreamBuilder<int>(
+              stream: _unreadNotifStream,
+              builder: (context, snapshot) {
+                final count = snapshot.data ?? 0;
+                return GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const NotificationsView()),
+                  ),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    padding: const EdgeInsets.all(12),
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
                     ),
-
-                    if (index == 2)
-                      StreamBuilder<QuerySnapshot>(
-                        stream: _bookingNotificationStream,
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData ||
-                              snapshot.data!.docs.isEmpty) {
-                            return const SizedBox();
-                          }
-
-                          return Positioned(
-                            top: -3,
-                            right: -3,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Icon(
+                          count > 0
+                              ? Icons.notifications_rounded
+                              : Icons.notifications_outlined,
+                          size: 26,
+                          color: count > 0 ? Colors.deepPurple : Colors.grey,
+                        ),
+                        if (count > 0)
+                          Positioned(
+                            top: -4,
+                            right: -4,
                             child: Container(
-                              width: 10,
-                              height: 10,
+                              width: count > 9 ? 18 : 14,
+                              height: 14,
                               decoration: const BoxDecoration(
                                 color: Colors.red,
                                 shape: BoxShape.circle,
                               ),
+                              child: Center(
+                                child: Text(
+                                  count > 9 ? '9+' : '$count',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
                             ),
-                          );
-                        },
-                      ),
-                  ],
-                ),
-              ),
-            );
-          }),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
